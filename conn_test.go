@@ -36,6 +36,11 @@ func (s *connSuite) TestQuery() {
 			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", []int16{1},
 				parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one"}},
 		},
+		{
+			"SELECT i64, count() FROM data WHERE i64<0 GROUP BY i64 WITH TOTALS ORDER BY i64",
+			nil,
+			[][]interface{}{{int64(-3), int64(1)}, {int64(-2), int64(1)}, {int64(-1), int64(1)}, {int64(0), int64(3)}},
+		},
 	}
 	for _, tc := range testCases {
 		rows, err := s.conn.Query(tc.query, tc.args...)

@@ -49,6 +49,11 @@ func (r *textRows) Next(dest []driver.Value) error {
 			k++
 			i = j + 1
 		case '\n':
+			if j == 0 {
+				// totals are separated by empty line
+				i = j + 1
+				continue
+			}
 			dest[k], err = r.decode.Decode(r.types[k], r.data[i:j])
 			r.data = r.data[j+1:]
 			return err
