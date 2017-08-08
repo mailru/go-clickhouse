@@ -30,7 +30,7 @@ func newConn(cfg *Config) *conn {
 		logger = log.New(os.Stderr, "clickhouse: ", log.LstdFlags)
 	}
 	c := &conn{
-		url:      cfg.url(map[string]string{"default_format": "TSVWithNamesAndTypes"}, false),
+		url:      cfg.url(map[string]string{"default_format": "TabSeparatedWithNamesAndTypes"}, false),
 		location: cfg.Location,
 		transport: &http.Transport{
 			DialContext: (&net.Dialer{
