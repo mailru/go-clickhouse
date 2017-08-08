@@ -49,7 +49,7 @@ type chSuite struct {
 func (s *chSuite) SetupSuite() {
 	dsn := os.Getenv("TEST_CLICKHOUSE_DSN")
 	if len(dsn) == 0 {
-		dsn = "http://localhost:8123/test"
+		dsn = "http://localhost:8123/default"
 	}
 	conn, err := sql.Open("clickhouse", dsn)
 	s.Require().NoError(err)

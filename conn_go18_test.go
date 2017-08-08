@@ -40,6 +40,7 @@ func (s *connSuite) TestPing() {
 func (s *connSuite) TestColumnTypes() {
 	rows, err := s.conn.Query("SELECT * FROM data LIMIT 1")
 	s.Require().NoError(err)
+	defer rows.Close()
 	types, err := rows.ColumnTypes()
 	s.Require().NoError(err)
 	expected := []string{

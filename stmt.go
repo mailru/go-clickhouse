@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"regexp"
 	"strings"
+	"sync/atomic"
 )
 
 var (
@@ -14,6 +15,7 @@ var (
 
 type stmt struct {
 	c         *conn
+	closed    int32
 	prefix    string
 	pattern   string
 	index     []int
@@ -48,10 +50,8 @@ func (s *stmt) Exec(args []driver.Value) (driver.Result, error) {
 
 // Close closes the statement.
 func (s *stmt) Close() error {
-	if s.c != nil {
-		// make close idempotent
-		s.c.closeStmt(s)
-		s.clean()
+	if atomic.CompareAndSwapInt32(&s.closed, 0, 1) {
+		s.c = nil
 	}
 	return nil
 }
@@ -66,6 +66,7 @@ func (s *stmt) query(ctx context.Context, args []driver.Value) (driver.Rows, err
 	if err != nil {
 		return nil, err
 	}
+	// sql.Stmt already checks that statements is not closed
 	return s.c.query(ctx, s.prefix+q, nil)
 }
 
@@ -78,36 +79,37 @@ func (s *stmt) exec(ctx context.Context, args []driver.Value) (driver.Result, er
 	if err != nil {
 		return nil, err
 	}
+	// sql.Stmt already checks that statements is not closed
 	return s.c.exec(ctx, s.prefix+q, nil)
 }
 
 func (s *stmt) commit(ctx context.Context) error {
-	if s.c == nil {
-		// statement has been closed
-		return nil
-	}
-	if len(s.args) == 0 {
-		return nil
-	}
-	buf := bytes.NewBufferString(s.prefix)
-	var (
-		p   string
-		err error
-	)
-	for i, args := range s.args {
-		if i > 0 {
-			buf.WriteString(", ")
+	if atomic.CompareAndSwapInt32(&s.closed, 0, 1) {
+		// statement is not usable after commit
+		// this code will not run if statement has been closed
+		args := s.args
+		con := s.c
+		s.args = nil
+		s.c = nil
+		if len(args) == 0 {
+			return nil
 		}
-		if p, err = interpolateParams(s.pattern, args); err != nil {
-			return err
+		buf := bytes.NewBufferString(s.prefix)
+		var (
+			p   string
+			err error
+		)
+		for i, arg := range args {
+			if i > 0 {
+				buf.WriteString(", ")
+			}
+			if p, err = interpolateParams(s.pattern, arg); err != nil {
+				return err
+			}
+			buf.WriteString(p)
 		}
-		buf.WriteString(p)
+		_, err = con.exec(ctx, buf.String(), nil)
+		return err
 	}
-	_, err = s.c.exec(ctx, buf.String(), nil)
-	s.args = s.args[0:0]
-	return err
-}
-
-func (s *stmt) clean() {
-	s.c = nil
+	return nil
 }
