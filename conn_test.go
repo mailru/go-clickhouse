@@ -42,6 +42,7 @@ func (s *connSuite) TestQuery() {
 			[][]interface{}{{int64(-3), int64(1)}, {int64(-2), int64(1)}, {int64(-1), int64(1)}, {int64(0), int64(3)}},
 		},
 	}
+
 	for _, tc := range testCases {
 		rows, err := s.conn.Query(tc.query, tc.args...)
 		if !s.NoError(err) {
@@ -56,6 +57,7 @@ func (s *connSuite) TestQuery() {
 				s.Equal(tc.expected, v)
 			}
 		}
+		s.NoError(rows.Close())
 	}
 }
 
@@ -102,6 +104,7 @@ func (s *connSuite) TestExec() {
 		if s.NoError(err) {
 			s.Equal([][]interface{}{tc.args}, v)
 		}
+		s.NoError(rows.Close())
 	}
 }
 

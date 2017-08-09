@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -22,6 +23,7 @@ type conn struct {
 	txCtx     context.Context
 	stmts     []*stmt
 	logger    *log.Logger
+	closed    int32
 }
 
 func newConn(cfg *Config) *conn {
@@ -63,17 +65,19 @@ func (c *conn) Prepare(query string) (driver.Stmt, error) {
 // prepared statements and transactions, marking this
 // connection as no longer in use.
 func (c *conn) Close() error {
-	c.log("close connection", c.url.Scheme, c.url.Host, c.url.Path)
-	cancel := c.cancel
-	transport := c.transport
-	c.transport = nil
-	c.cancel = nil
+	if atomic.CompareAndSwapInt32(&c.closed, 0, 1) {
+		c.log("close connection", c.url.Scheme, c.url.Host, c.url.Path)
+		cancel := c.cancel
+		transport := c.transport
+		c.transport = nil
+		c.cancel = nil
 
-	if cancel != nil {
-		cancel()
-	}
-	if transport != nil {
-		transport.CloseIdleConnections()
+		if cancel != nil {
+			cancel()
+		}
+		if transport != nil {
+			transport.CloseIdleConnections()
+		}
 	}
 	return nil
 }
@@ -85,10 +89,15 @@ func (c *conn) Begin() (driver.Tx, error) {
 
 // Commit applies prepared statement if it exists
 func (c *conn) Commit() (err error) {
+	if atomic.LoadInt32(&c.closed) != 0 {
+		return driver.ErrBadConn
+	}
 	if c.txCtx == nil {
 		return sql.ErrTxDone
 	}
+	ctx := c.txCtx
 	stmts := c.stmts
+	c.txCtx = nil
 	c.stmts = stmts[:0]
 
 	if len(stmts) == 0 {
@@ -96,19 +105,18 @@ func (c *conn) Commit() (err error) {
 	}
 	for _, stmt := range stmts {
 		c.log("commit statement: ", stmt.prefix, stmt.pattern)
-		if err == nil {
-			if err = stmt.commit(c.txCtx); err != nil {
-				break
-			}
+		if err = stmt.commit(ctx); err != nil {
+			break
 		}
-		stmt.clean()
 	}
-	c.txCtx = nil
 	return
 }
 
 // Rollback cleans prepared statement
 func (c *conn) Rollback() error {
+	if atomic.LoadInt32(&c.closed) != 0 {
+		return driver.ErrBadConn
+	}
 	if c.txCtx == nil {
 		return sql.ErrTxDone
 	}
@@ -117,13 +125,10 @@ func (c *conn) Rollback() error {
 	c.stmts = stmts[:0]
 
 	if len(stmts) == 0 {
+		// there is no statements, so nothing to rollback
 		return sql.ErrTxDone
 	}
-	for _, stmt := range stmts {
-		c.log("discard statement: ", stmt.prefix, stmt.pattern)
-		stmt.clean()
-	}
-	c.txCtx = nil
+	// the statements will be closed by sql.Tx
 	return nil
 }
 
@@ -138,11 +143,17 @@ func (c *conn) Query(query string, args []driver.Value) (driver.Rows, error) {
 }
 
 func (c *conn) beginTx(ctx context.Context) (driver.Tx, error) {
+	if atomic.LoadInt32(&c.closed) != 0 {
+		return nil, driver.ErrBadConn
+	}
 	c.txCtx = ctx
 	return c, nil
 }
 
 func (c *conn) query(ctx context.Context, query string, args []driver.Value) (driver.Rows, error) {
+	if atomic.LoadInt32(&c.closed) != 0 {
+		return nil, driver.ErrBadConn
+	}
 	req, err := c.buildRequest(query, args, true)
 	if err != nil {
 		return nil, err
@@ -155,6 +166,9 @@ func (c *conn) query(ctx context.Context, query string, args []driver.Value) (dr
 }
 
 func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (driver.Result, error) {
+	if atomic.LoadInt32(&c.closed) != 0 {
+		return nil, driver.ErrBadConn
+	}
 	req, err := c.buildRequest(query, args, false)
 	if err != nil {
 		return nil, err
@@ -207,6 +221,9 @@ func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) 
 }
 
 func (c *conn) prepare(query string) (*stmt, error) {
+	if atomic.LoadInt32(&c.closed) != 0 {
+		return nil, driver.ErrBadConn
+	}
 	c.log("new statement: ", query)
 	s := newStmt(query)
 	s.c = c
@@ -217,20 +234,4 @@ func (c *conn) prepare(query string) (*stmt, error) {
 		c.stmts = append(c.stmts, s)
 	}
 	return s, nil
-}
-
-func (c *conn) closeStmt(s *stmt) {
-	c.log("close statement: ", s.prefix, s.pattern)
-	if len(c.stmts) == 0 {
-		return
-	}
-	newstmts := make([]*stmt, len(c.stmts))
-	j := 0
-	for _, st := range c.stmts {
-		if st != s {
-			newstmts[j] = st
-			j++
-		}
-	}
-	c.stmts = newstmts[:j]
 }

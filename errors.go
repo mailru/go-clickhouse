@@ -14,7 +14,6 @@ var (
 	ErrMalformed        = errors.New("clickhouse: response is malformed")
 	ErrNoLastInsertID   = errors.New("no LastInsertId available")
 	ErrNoRowsAffected   = errors.New("no RowsAffected available")
-	ErrNoNil            = errors.New("nil value is not supported")
 )
 
 var errorRe = regexp.MustCompile(`Code: (\d+),.+DB::Exception: (.+),.*`)

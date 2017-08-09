@@ -59,6 +59,7 @@ func (s *stmtSuite) TestQuery() {
 					s.Equal([][]interface{}{expected}, v)
 				}
 			}
+			s.NoError(rows.Close())
 		}
 		s.NoError(st.Close())
 		_, err = st.Query(tc.args[0]...)
@@ -103,6 +104,7 @@ func (s *stmtSuite) TestExec() {
 			if s.NoError(err) {
 				s.Equal([][]interface{}{args}, v)
 			}
+			s.NoError(rows.Close())
 		}
 		s.NoError(st.Close())
 		_, err = st.Exec(tc.args[0]...)
@@ -121,12 +123,14 @@ func (s *stmtSuite) TestExecMulti() {
 	st.Exec(22)
 	rows, err := s.conn.Query("SELECT i64 FROM data WHERE i64=21")
 	s.False(rows.Next())
+	s.NoError(rows.Close())
 	require.NoError(tx.Commit())
 	s.NoError(st.Close())
 	rows, err = s.conn.Query("SELECT i64 FROM data WHERE i64>20")
 	require.NoError(err)
 	expected := [][]interface{}{{int64(21)}, {int64(22)}}
 	v, err := scanValues(rows, expected[0])
+	s.NoError(rows.Close())
 	require.NoError(err)
 	s.Equal(expected, v)
 }
@@ -141,11 +145,13 @@ func (s *stmtSuite) TestExecMultiRollback() {
 	st.Exec(32)
 	rows, err := s.conn.Query("SELECT i64 FROM data WHERE i64=31")
 	s.False(rows.Next())
+	s.NoError(rows.Close())
 	require.NoError(tx.Rollback())
 	s.NoError(st.Close())
 	rows, err = s.conn.Query("SELECT i64 FROM data WHERE i64>30")
 	require.NoError(err)
 	s.False(rows.Next())
+	s.NoError(rows.Close())
 }
 
 func (s *stmtSuite) TestExecMultiInterrupt() {
@@ -160,12 +166,14 @@ func (s *stmtSuite) TestExecMultiInterrupt() {
 	st.Exec(32)
 	rows, err := s.conn.Query("SELECT i64 FROM data WHERE i64=31")
 	s.False(rows.Next())
+	s.NoError(rows.Close())
 	require.NoError(st.Close())
 	require.NoError(tx.Commit())
 	require.NoError(st2.Close())
 	rows, err = s.conn.Query("SELECT i64 FROM data WHERE i64>30")
 	require.NoError(err)
 	s.False(rows.Next())
+	s.NoError(rows.Close())
 }
 
 func TestStmt(t *testing.T) {
