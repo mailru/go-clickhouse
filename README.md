@@ -46,7 +46,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/mailru/go-clickhouse"
+	_ "github.com/mailru/go-clickhouse"
 )
 
 func main() {
