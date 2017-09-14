@@ -38,19 +38,19 @@ func NewConfig() *Config {
 func (cfg *Config) FormatDSN() string {
 	u := cfg.url(nil, true)
 	query := u.Query()
-	if cfg.Timeout > 0 {
+	if cfg.Timeout != 0 {
 		query.Set("timeout", cfg.Timeout.String())
 	}
-	if cfg.IdleTimeout > 0 {
+	if cfg.IdleTimeout != 0 {
 		query.Set("idle_timeout", cfg.IdleTimeout.String())
 	}
-	if cfg.ReadTimeout > 0 {
+	if cfg.ReadTimeout != 0 {
 		query.Set("read_timeout", cfg.ReadTimeout.String())
 	}
-	if cfg.WriteTimeout > 0 {
+	if cfg.WriteTimeout != 0 {
 		query.Set("write_timeout", cfg.WriteTimeout.String())
 	}
-	if cfg.Location != time.UTC {
+	if cfg.Location != time.UTC && cfg.Location != nil {
 		query.Set("location", cfg.Location.String())
 	}
 	if cfg.Debug {
