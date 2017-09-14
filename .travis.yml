@@ -5,6 +5,7 @@ language: go
 go:
   - 1.7
   - 1.8
+  - 1.9
 
 services:
   - docker
@@ -26,5 +27,5 @@ script:
   - test -z "$(golint ./... | tee /dev/stderr)"
   - go vet ./...
   - test -z "$(gofmt -d -s . | tee /dev/stderr)"
-  - go test -v -race -covermode=count -coverprofile=coverage.out .
+  - go test -v -covermode=count -coverprofile=coverage.out .
   - goveralls -coverprofile=coverage.out -service=travis-ci
