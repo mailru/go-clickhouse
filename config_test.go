@@ -90,3 +90,23 @@ func TestConfigURL(t *testing.T) {
 		assert.Contains(t, u2, "database=test")
 	}
 }
+
+func TestDefaultPort(t *testing.T) {
+	testCases := []struct {
+		in  string
+		out string
+	}{
+		{"http://localhost/test", "http://localhost:8123/test"},
+		{"http://de:ad:be:ef::ca:fe/test", "http://[de:ad:be:ef::ca:fe]:8123/test"},
+	}
+	var (
+		cfg *Config
+		err error
+	)
+	for _, tc := range testCases {
+		cfg, err = ParseDSN(tc.in)
+		if assert.NoError(t, err) {
+			assert.Equal(t, tc.out, cfg.url(nil, true).String())
+		}
+	}
+}

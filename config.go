@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"strconv"
 	"time"
@@ -63,7 +64,7 @@ func (cfg *Config) FormatDSN() string {
 
 func (cfg *Config) url(extra map[string]string, dsn bool) *url.URL {
 	u := &url.URL{
-		Host:   cfg.Host,
+		Host:   ensureHavePort(cfg.Host),
 		Scheme: cfg.Scheme,
 		Path:   "/",
 	}
@@ -158,4 +159,11 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 	}
 
 	return
+}
+
+func ensureHavePort(addr string) string {
+	if _, _, err := net.SplitHostPort(addr); err != nil {
+		return net.JoinHostPort(addr, "8123")
+	}
+	return addr
 }
