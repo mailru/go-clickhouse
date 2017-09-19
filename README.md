@@ -8,6 +8,10 @@ Yet another Golang SQL database driver for [Yandex ClickHouse](https://clickhous
 * Compatibility with [dbr](https://github.com/mailru/dbr)
 
 ## DSN
+```
+schema://user:password@host[:port]/database?param1=value1&...&paramN=valueN
+```
+### parameters
 * timeout - is the maximum amount of time a dial will wait for a connect to complete
 * idle_timeout - is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
 * read_timeout - specifies the amount of time to wait for a server's response
