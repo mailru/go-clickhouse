@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"net/http"
 )
 
 var (
@@ -131,6 +132,33 @@ func (s *connSuite) TestServerError() {
 	s.Equal(62, srvErr.Code)
 	s.Contains(srvErr.Message, "Syntax error:")
 	s.Contains(srvErr.Error(), "Code: 62, Message: Syntax error:")
+}
+
+func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
+	cfg := NewConfig()
+	cfg.User = "user"
+	cfg.Password = "password"
+	cn := newConn(cfg)
+	req, err := cn.buildRequest("SELECT 1", nil, true)
+	if s.NoError(err) {
+		user, password, ok := req.BasicAuth()
+		s.True(ok)
+		s.Equal("user", user)
+		s.Equal("password", password)
+		s.Equal(http.MethodGet, req.Method)
+		s.Equal(cn.url.String(), req.URL.String())
+	}
+}
+
+func (s *connSuite) TestBuildRequestReadWriteWOAuth() {
+	cn := newConn(NewConfig())
+	req, err := cn.buildRequest("INSERT 1 INTO num", nil, false)
+	if s.NoError(err) {
+		_, _, ok := req.BasicAuth()
+		s.False(ok)
+		s.Equal(http.MethodPost, req.Method)
+		s.Equal(cn.url.String(), req.URL.String())
+	}
 }
 
 func TestConn(t *testing.T) {
