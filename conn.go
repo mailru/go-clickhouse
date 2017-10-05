@@ -217,7 +217,13 @@ func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) 
 		method = http.MethodPost
 	}
 	c.log("query: ", query)
-	return http.NewRequest(method, c.url.String(), strings.NewReader(query))
+	req, err := http.NewRequest(method, c.url.String(), strings.NewReader(query))
+	// http.Transport ignores url.User argument, handle it here
+	if err == nil && req.URL.User != nil {
+		p, _ := req.URL.User.Password()
+		req.SetBasicAuth(req.URL.User.Username(), p)
+	}
+	return req, err
 }
 
 func (c *conn) prepare(query string) (*stmt, error) {
