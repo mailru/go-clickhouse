@@ -147,6 +147,7 @@ func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 		s.Equal("password", password)
 		s.Equal(http.MethodGet, req.Method)
 		s.Equal(cn.url.String(), req.URL.String())
+		s.Nil(req.URL.User)
 	}
 }
 
