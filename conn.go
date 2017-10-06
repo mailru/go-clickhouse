@@ -17,6 +17,7 @@ import (
 // conn implements an interface sql.Conn
 type conn struct {
 	url       *url.URL
+	user      *url.Userinfo
 	location  *time.Location
 	transport *http.Transport
 	cancel    context.CancelFunc
@@ -46,6 +47,9 @@ func newConn(cfg *Config) *conn {
 		},
 		logger: logger,
 	}
+	// store userinfo in separate member, we will handle it manually
+	c.user = c.url.User
+	c.url.User = nil
 	c.log("new connection", c.url.Scheme, c.url.Host, c.url.Path)
 	return c
 }
@@ -219,9 +223,9 @@ func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) 
 	c.log("query: ", query)
 	req, err := http.NewRequest(method, c.url.String(), strings.NewReader(query))
 	// http.Transport ignores url.User argument, handle it here
-	if err == nil && req.URL.User != nil {
-		p, _ := req.URL.User.Password()
-		req.SetBasicAuth(req.URL.User.Username(), p)
+	if err == nil && c.user != nil {
+		p, _ := c.user.Password()
+		req.SetBasicAuth(c.user.Username(), p)
 	}
 	return req, err
 }
