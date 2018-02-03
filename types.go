@@ -11,9 +11,8 @@ func Array(v interface{}) driver.Valuer {
 }
 
 // Date returns date for t
-func Date(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
+func Date(t time.Time) driver.Valuer {
+	return date(t)
 }
 
 type array struct {
@@ -23,4 +22,11 @@ type array struct {
 // Value implements driver.Valuer
 func (a array) Value() (driver.Value, error) {
 	return []byte(textEncode.Encode(a.v)), nil
+}
+
+type date time.Time
+
+// Value implements driver.Valuer
+func (d date) Value() (driver.Value, error) {
+	return []byte(formatDate(time.Time(d))), nil
 }

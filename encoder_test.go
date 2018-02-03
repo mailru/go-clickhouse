@@ -29,13 +29,13 @@ func TestTextEncoder(t *testing.T) {
 		{float32(1), "1"},
 		{float64(1), "1"},
 		{dt, "'2011-03-06 06:20:00'"},
-		{d, "'2012-05-31'"},
+		{d, "'2012-05-31 00:00:00'"},
 		{"hello", "'hello'"},
 		{[]byte("hello"), "hello"},
 		{`\\'hello`, `'\\\\\'hello'`},
 		{[]byte(`\\'hello`), `\\'hello`},
 		{[]int32{1, 2}, "[1,2]"},
-		{&d, "'2012-05-31'"},
+		{&d, "'2012-05-31 00:00:00'"},
 	}
 
 	enc := new(textEncoder)

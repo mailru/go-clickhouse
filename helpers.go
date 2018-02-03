@@ -33,11 +33,11 @@ func unqoute(s string) string {
 }
 
 func formatTime(value time.Time) string {
-	h, m, s := value.Clock()
-	if (h + m + s + value.Nanosecond()) == 0 {
-		return value.Format(dateFormat)
-	}
-	return value.Format(timeFormat)
+	return quote(value.Format(timeFormat))
+}
+
+func formatDate(value time.Time) string {
+	return quote(value.Format(dateFormat))
 }
 
 func readResponse(response *http.Response) (result []byte, err error) {

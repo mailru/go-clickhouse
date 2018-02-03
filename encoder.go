@@ -72,7 +72,7 @@ func (e *textEncoder) Encode(value driver.Value) string {
 	case []byte:
 		return string(v)
 	case time.Time:
-		return quote(formatTime(v))
+		return formatTime(v)
 	}
 
 	vv := reflect.ValueOf(value)
