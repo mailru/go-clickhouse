@@ -85,6 +85,11 @@ func (s *connSuite) TestExec() {
 			[]interface{}{int64(3), Array([]int16{1, 2})},
 		},
 		{
+			"INSERT INTO data (u64) VALUES (?)",
+			"",
+			[]interface{}{UInt64(uint64(1) << 63)},
+		},
+		{
 			"INSERT INTO data (d, t) VALUES (?, ?)",
 			"",
 			[]interface{}{

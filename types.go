@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"database/sql/driver"
+	"strconv"
 	"time"
 )
 
@@ -13,6 +14,11 @@ func Array(v interface{}) driver.Valuer {
 // Date returns date for t
 func Date(t time.Time) driver.Valuer {
 	return date(t)
+}
+
+// UInt64 returns date for t
+func UInt64(u uint64) driver.Valuer {
+	return bigUint64(u)
 }
 
 type array struct {
@@ -29,4 +35,11 @@ type date time.Time
 // Value implements driver.Valuer
 func (d date) Value() (driver.Value, error) {
 	return []byte(formatDate(time.Time(d))), nil
+}
+
+type bigUint64 uint64
+
+// Value implements driver.Valuer
+func (u bigUint64) Value() (driver.Value, error) {
+	return []byte(strconv.FormatUint(uint64(u), 10)), nil
 }

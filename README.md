@@ -35,6 +35,9 @@ http://user:password@host:8123/clicks?read_timeout=10&write_timeout=20
 * Enum
 * [Array(T) (one-dimensional)](https://clickhouse.yandex/reference_en.html#Array(T))
 
+Note:
+database/sql does not allow to use big uint64 values.
+It is recommended use type `UInt64` which is provided by driver for such kind of values.
 
 ## Install
 ```
