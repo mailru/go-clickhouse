@@ -31,7 +31,9 @@ func TestArray(t *testing.T) {
 }
 
 func TestDate(t *testing.T) {
-	dt := time.Date(2016, 4, 4, 11, 22, 33, 0, time.Local)
 	d := time.Date(2016, 4, 4, 0, 0, 0, 0, time.Local)
-	assert.Equal(t, d, Date(dt))
+	dv, err := Date(d).Value()
+	if assert.NoError(t, err) {
+		assert.Equal(t, []byte("'2016-04-04'"), dv)
+	}
 }

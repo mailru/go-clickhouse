@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"net/http"
+	"time"
 )
 
 var (
@@ -82,6 +83,14 @@ func (s *connSuite) TestExec() {
 			"INSERT INTO data (i64, a) VALUES (?, ?)",
 			"",
 			[]interface{}{int64(3), Array([]int16{1, 2})},
+		},
+		{
+			"INSERT INTO data (d, t) VALUES (?, ?)",
+			"",
+			[]interface{}{
+				Date(time.Date(2016, 4, 4, 0, 0, 0, 0, time.Local)),
+				time.Date(2016, 4, 4, 0, 0, 0, 0, time.Local),
+			},
 		},
 	}
 	for _, tc := range testCases {
