@@ -34,7 +34,7 @@ func (s *connSuite) TestQuery() {
 		{
 			"SELECT * FROM data WHERE u64=?",
 			[]interface{}{1},
-			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", []int16{1},
+			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", "1", []int16{1},
 				parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one"}},
 		},
 		{

@@ -44,7 +44,7 @@ func (s *connSuite) TestColumnTypes() {
 	types, err := rows.ColumnTypes()
 	s.Require().NoError(err)
 	expected := []string{
-		"Int64", "UInt64", "Float64", "String", "Array(Int16)", "Date", "DateTime",
+		"Int64", "UInt64", "Float64", "String", "String", "Array(Int16)", "Date", "DateTime",
 		`Enum8(\'one\' = 1, \'two\' = 2, \'three\' = 3)`,
 	}
 	s.Require().Equal(len(expected), len(types))
