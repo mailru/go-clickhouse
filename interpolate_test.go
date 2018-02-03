@@ -19,6 +19,7 @@ func TestInterpolate(t *testing.T) {
 		{"SELECT ?, ?", []driver.Value{1, 2.0}, "SELECT 1, 2"},
 		{"SELECT a='?' AND b=?", []driver.Value{"1"}, "SELECT a='?' AND b='1'"},
 		{"SELECT a=? AND b='?'", []driver.Value{"1"}, "SELECT a='1' AND b='?'"},
+		{"SELECT '\\'', ?", []driver.Value{"1"}, "SELECT '\\'', '1'"},
 	}
 
 	for _, tc := range testCases {

@@ -8,8 +8,10 @@ func placeholders(query string) []int {
 	n := 0
 	quote := false
 	first := -1
-	for i, ch := range []byte(query) {
-		switch ch {
+	for i := 0; i < len(query); i++ {
+		switch query[i] {
+		case '\\':
+			i++
 		case '\'':
 			quote = !quote
 		case '?':
