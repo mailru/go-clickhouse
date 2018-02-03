@@ -37,3 +37,11 @@ func TestDate(t *testing.T) {
 		assert.Equal(t, []byte("'2016-04-04'"), dv)
 	}
 }
+
+func TestUInt64(t *testing.T) {
+	u := uint64(1) << 63
+	dv, err := UInt64(u).Value()
+	if assert.NoError(t, err) {
+		assert.Equal(t, []byte("9223372036854775808"), dv)
+	}
+}
