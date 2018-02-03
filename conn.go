@@ -210,11 +210,15 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) ([]byte, error)
 }
 
 func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) (*http.Request, error) {
-	query, err := interpolateParams(query, params)
-	if err != nil {
-		return nil, err
+	var (
+		method string
+		err    error
+	)
+	if params != nil {
+		if query, err = interpolateParams(query, params); err != nil {
+			return nil, err
+		}
 	}
-	var method string
 	if readonly {
 		method = http.MethodGet
 	} else {

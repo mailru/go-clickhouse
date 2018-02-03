@@ -176,6 +176,25 @@ func (s *stmtSuite) TestExecMultiInterrupt() {
 	s.NoError(rows.Close())
 }
 
+func (s *stmtSuite) TestFixDoubleInterpolateInStmt() {
+	require := s.Require()
+	tx, err := s.conn.Begin()
+	require.NoError(err)
+	st, err := tx.Prepare("INSERT INTO data (s, s2) VALUES (?, ?)")
+	require.NoError(err)
+	args := []interface{}{"'", "?"}
+	st.Exec(args...)
+	require.NoError(tx.Commit())
+	require.NoError(st.Close())
+	rows, err := s.conn.Query("SELECT s, s2 FROM data WHERE s='\\'' AND s2='?'")
+	require.NoError(err)
+	v, err := scanValues(rows, args)
+	if s.NoError(err) {
+		s.Equal([][]interface{}{args}, v)
+	}
+	s.NoError(rows.Close())
+}
+
 func TestStmt(t *testing.T) {
 	suite.Run(t, new(stmtSuite))
 }

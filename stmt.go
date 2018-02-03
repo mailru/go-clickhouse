@@ -103,7 +103,7 @@ func (s *stmt) commit(ctx context.Context) error {
 			if i > 0 {
 				buf.WriteString(", ")
 			}
-			if p, err = interpolateParams(s.pattern, arg); err != nil {
+			if p, err = interpolateParams2(s.pattern, arg, s.index); err != nil {
 				return err
 			}
 			buf.WriteString(p)
