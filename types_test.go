@@ -1,11 +1,10 @@
 package clickhouse
 
 import (
+	"database/sql/driver"
+	"testing"
 	"time"
 
-	"testing"
-
-	"database/sql/driver"
 	"github.com/stretchr/testify/assert"
 )
 

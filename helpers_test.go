@@ -2,9 +2,8 @@ package clickhouse
 
 import (
 	"reflect"
-	"time"
-
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )

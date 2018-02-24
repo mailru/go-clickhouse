@@ -2,12 +2,12 @@ package clickhouse
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"os"
 	"reflect"
 	"sync"
 	"time"
 
-	"database/sql/driver"
 	"github.com/stretchr/testify/suite"
 )
 
