@@ -84,7 +84,7 @@ func (d *dbInit) Do(conn *sql.DB) error {
 }
 
 func scanValues(rows *sql.Rows, template []interface{}) (interface{}, error) {
-	result := [][]interface{}{}
+	var result [][]interface{}
 	types := make([]reflect.Type, len(template))
 	for i, v := range template {
 		types[i] = reflect.TypeOf(v)
