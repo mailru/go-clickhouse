@@ -97,9 +97,9 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 	v := string(value)
 	switch t {
 	case "Date":
-		return time.ParseInLocation(dateFormat, unqoute(v), d.location)
+		return time.ParseInLocation(dateFormat, unquote(v), d.location)
 	case "DateTime":
-		return time.ParseInLocation(timeFormat, unqoute(v), d.location)
+		return time.ParseInLocation(timeFormat, unquote(v), d.location)
 	case "UInt8":
 		vv, err := strconv.ParseUint(v, 10, 8)
 		return uint8(vv), err
@@ -128,10 +128,10 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 	case "Float64":
 		return strconv.ParseFloat(v, 64)
 	case "String":
-		return unescape(unqoute(v)), nil
+		return unescape(unquote(v)), nil
 	}
 	if strings.HasPrefix(t, "FixedString") {
-		return unescape(unqoute(v)), nil
+		return unescape(unquote(v)), nil
 	}
 	if strings.HasPrefix(t, "Array") {
 		if len(v) > 0 && v[0] == '[' && v[len(value)-1] == ']' {
@@ -150,7 +150,7 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 		return nil, ErrMalformed
 	}
 	if strings.HasPrefix(t, "Enum") {
-		return unqoute(v), nil
+		return unquote(v), nil
 	}
 	return value, nil
 }
