@@ -3,12 +3,11 @@ package clickhouse
 import (
 	"database/sql"
 	"database/sql/driver"
-
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
-	"net/http"
-	"time"
 )
 
 var (

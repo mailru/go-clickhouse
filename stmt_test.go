@@ -2,7 +2,6 @@ package clickhouse
 
 import (
 	"database/sql/driver"
-
 	"testing"
 
 	"github.com/stretchr/testify/suite"

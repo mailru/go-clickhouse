@@ -25,7 +25,7 @@ func quote(s string) string {
 	return "'" + s + "'"
 }
 
-func unqoute(s string) string {
+func unquote(s string) string {
 	if len(s) > 0 && s[0] == '\'' && s[len(s)-1] == '\'' {
 		return s[1 : len(s)-1]
 	}
