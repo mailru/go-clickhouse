@@ -34,6 +34,7 @@ func TestTextEncoder(t *testing.T) {
 		{`\\'hello`, `'\\\\\'hello'`},
 		{[]byte(`\\'hello`), `\\'hello`},
 		{[]int32{1, 2}, "[1,2]"},
+		{[]int32{}, "[]"},
 		{&d, "'2012-05-31 00:00:00'"},
 	}
 
@@ -70,6 +71,7 @@ func TestTextDecoder(t *testing.T) {
 		{"Enum8('one'=1)", "'one'", "one"},
 		{"Enum16('one'=1)", "'one'", "one"},
 		{"Array(UInt32)", "[1,2]", []uint32{1, 2}},
+		{"Array(UInt32)", "[]", []uint32{}},
 	}
 
 	dec := &textDecoder{location: time.UTC}
