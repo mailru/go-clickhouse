@@ -19,6 +19,7 @@ func TestArray(t *testing.T) {
 		{[]uint16{1, 2}, []byte("[1,2]")},
 		{[]uint32{1, 2}, []byte("[1,2]")},
 		{[]uint64{1, 2}, []byte("[1,2]")},
+		{[]uint64{}, []byte("[]")},
 	}
 
 	for _, tc := range testCases {
