@@ -211,21 +211,25 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) ([]byte, error)
 
 func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) (*http.Request, error) {
 	var (
-		method string
-		err    error
+		req *http.Request
+		err error
 	)
 	if params != nil {
 		if query, err = interpolateParams(query, params); err != nil {
 			return nil, err
 		}
 	}
-	if readonly {
-		method = http.MethodGet
-	} else {
-		method = http.MethodPost
-	}
 	c.log("query: ", query)
-	req, err := http.NewRequest(method, c.url.String(), strings.NewReader(query))
+	if readonly {
+		u := *c.url
+		q := u.Query()
+		q.Set("query", query)
+		u.RawQuery = q.Encode()
+		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+	} else {
+		req, err = http.NewRequest(http.MethodPost, c.url.String(), strings.NewReader(query))
+	}
+
 	// http.Transport ignores url.User argument, handle it here
 	if err == nil && c.user != nil {
 		p, _ := c.user.Password()
