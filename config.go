@@ -10,18 +10,19 @@ import (
 
 // Config is a configuration parsed from a DSN string
 type Config struct {
-	User         string
-	Password     string
-	Scheme       string
-	Host         string
-	Database     string
-	Timeout      time.Duration
-	IdleTimeout  time.Duration
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	Location     *time.Location
-	Debug        bool
-	Params       map[string]string
+	User          string
+	Password      string
+	Scheme        string
+	Host          string
+	Database      string
+	Timeout       time.Duration
+	IdleTimeout   time.Duration
+	ReadTimeout   time.Duration
+	WriteTimeout  time.Duration
+	Location      *time.Location
+	Debug         bool
+	UseDBLocation bool
+	Params        map[string]string
 }
 
 // NewConfig creates a new config with default values

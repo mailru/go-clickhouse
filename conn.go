@@ -16,15 +16,16 @@ import (
 
 // conn implements an interface sql.Conn
 type conn struct {
-	url       *url.URL
-	user      *url.Userinfo
-	location  *time.Location
-	transport *http.Transport
-	cancel    context.CancelFunc
-	txCtx     context.Context
-	stmts     []*stmt
-	logger    *log.Logger
-	closed    int32
+	url           *url.URL
+	user          *url.Userinfo
+	location      *time.Location
+	useDBLocation bool
+	transport     *http.Transport
+	cancel        context.CancelFunc
+	txCtx         context.Context
+	stmts         []*stmt
+	logger        *log.Logger
+	closed        int32
 }
 
 func newConn(cfg *Config) *conn {
@@ -33,8 +34,9 @@ func newConn(cfg *Config) *conn {
 		logger = log.New(os.Stderr, "clickhouse: ", log.LstdFlags)
 	}
 	c := &conn{
-		url:      cfg.url(map[string]string{"default_format": "TabSeparatedWithNamesAndTypes"}, false),
-		location: cfg.Location,
+		url:           cfg.url(map[string]string{"default_format": "TabSeparatedWithNamesAndTypes"}, false),
+		location:      cfg.Location,
+		useDBLocation: cfg.UseDBLocation,
 		transport: &http.Transport{
 			DialContext: (&net.Dialer{
 				Timeout:   cfg.Timeout,
@@ -166,7 +168,7 @@ func (c *conn) query(ctx context.Context, query string, args []driver.Value) (dr
 	if err != nil {
 		return nil, err
 	}
-	return newTextRows(body, c.location)
+	return newTextRows(body, c.location, c.useDBLocation)
 }
 
 func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (driver.Result, error) {

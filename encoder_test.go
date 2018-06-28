@@ -64,6 +64,7 @@ func TestTextDecoder(t *testing.T) {
 		{"Float64", "1", float64(1)},
 		{"Date", "'2012-05-31'", d},
 		{"DateTime", "'2011-03-06 06:20:00'", dt},
+		{"DateTime(\\'Europe/Moscow\\')", "'2011-03-06 06:20:00'", dt},
 		{"String", "'hello'", "hello"},
 		{"String", `'\\\\\'hello'`, `\\'hello`},
 		{"FixedString(5)", "'hello'", "hello"},
@@ -74,11 +75,23 @@ func TestTextDecoder(t *testing.T) {
 		{"Array(UInt32)", "[]", []uint32{}},
 	}
 
-	dec := &textDecoder{location: time.UTC}
-	for _, tc := range testCases {
+	dec := &textDecoder{location: time.UTC, useDBLocation: false}
+	for i, tc := range testCases {
 		v, err := dec.Decode(tc.tt, []byte(tc.value))
-		if assert.NoError(t, err) {
+		if assert.NoError(t, err, "%d", i) {
 			assert.Equal(t, tc.expected, v)
 		}
+	}
+}
+
+func TestDecodeTimeWithLocation(t *testing.T) {
+	dt := time.Date(2011, 3, 6, 3, 20, 0, 0, time.UTC)
+	dataType := "DateTime(\\'Europe/Moscow\\')"
+	dtStr := "'2011-03-06 06:20:00'"
+	dec := &textDecoder{location: time.UTC, useDBLocation: true}
+
+	v, err := dec.Decode(dataType, []byte(dtStr))
+	if assert.NoError(t, err) {
+		assert.Equal(t, dt, v)
 	}
 }
