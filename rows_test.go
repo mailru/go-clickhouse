@@ -11,7 +11,7 @@ import (
 )
 
 func TestTextRows(t *testing.T) {
-	rows, err := newTextRows([]byte("Number\tText\nInt32\tString\n1\t'hello'\n2\t'world'\n"), time.Local)
+	rows, err := newTextRows([]byte("Number\tText\nInt32\tString\n1\t'hello'\n2\t'world'\n"), time.Local, false)
 	if !assert.NoError(t, err) {
 		return
 	}

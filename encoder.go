@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	dateFormat = "2006-01-02"
-	timeFormat = "2006-01-02 15:04:05"
+	dateFormat     = "2006-01-02"
+	timeFormat     = "2006-01-02 15:04:05"
+	timeZoneBorder = "\\'"
 )
 
 var (
@@ -30,7 +31,8 @@ type textEncoder struct {
 }
 
 type textDecoder struct {
-	location *time.Location
+	location      *time.Location
+	useDBLocation bool
 }
 
 func (e *textEncoder) Encode(value driver.Value) string {
@@ -130,6 +132,37 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 	case "String":
 		return unescape(unquote(v)), nil
 	}
+
+	// got zoned datetime
+	if strings.HasPrefix(t, "DateTime") {
+		var (
+			loc *time.Location
+			err error
+		)
+
+		if d.useDBLocation {
+			left := strings.Index(t, timeZoneBorder)
+			if left == -1 {
+				return nil, fmt.Errorf("time zone not found")
+			}
+			right := strings.LastIndex(t, timeZoneBorder)
+			timeZoneName := t[left+len(timeZoneBorder) : right]
+
+			loc, err = time.LoadLocation(timeZoneName)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			loc = d.location
+		}
+
+		var t time.Time
+		if t, err = time.ParseInLocation(timeFormat, unquote(v), loc); err != nil {
+			return t, err
+		}
+		return t.In(d.location), nil
+	}
+
 	if strings.HasPrefix(t, "FixedString") {
 		return unescape(unquote(v)), nil
 	}

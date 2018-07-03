@@ -62,7 +62,7 @@ func (r *textRows) Next(dest []driver.Value) error {
 	return io.EOF
 }
 
-func newTextRows(data []byte, location *time.Location) (*textRows, error) {
+func newTextRows(data []byte, location *time.Location, useDBLocation bool) (*textRows, error) {
 	colCount := numOfColumns(data)
 	if colCount < 0 {
 		return nil, ErrMalformed
@@ -71,5 +71,5 @@ func newTextRows(data []byte, location *time.Location) (*textRows, error) {
 	types := make([]string, colCount)
 	data = data[splitTSV(data, columns):]
 	data = data[splitTSV(data, types):]
-	return &textRows{columns: columns, types: types, data: data, decode: &textDecoder{location: location}}, nil
+	return &textRows{columns: columns, types: types, data: data, decode: &textDecoder{location: location, useDBLocation: useDBLocation}}, nil
 }
