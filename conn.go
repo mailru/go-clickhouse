@@ -227,7 +227,7 @@ func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) 
 		q := u.Query()
 		q.Set("query", query)
 		u.RawQuery = q.Encode()
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		req, err = http.NewRequest(http.MethodPost, u.String(), nil)
 	} else {
 		req, err = http.NewRequest(http.MethodPost, c.url.String(), strings.NewReader(query))
 	}
