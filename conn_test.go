@@ -158,7 +158,7 @@ func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 		s.True(ok)
 		s.Equal("user", user)
 		s.Equal("password", password)
-		s.Equal(http.MethodGet, req.Method)
+		s.Equal(http.MethodPost, req.Method)
 		s.Equal(cn.url.String()+"&query=SELECT+1", req.URL.String())
 		s.Nil(req.URL.User)
 	}
