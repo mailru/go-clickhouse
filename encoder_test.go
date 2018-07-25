@@ -47,6 +47,7 @@ func TestTextEncoder(t *testing.T) {
 func TestTextDecoder(t *testing.T) {
 	dt := time.Date(2011, 3, 6, 6, 20, 0, 0, time.UTC)
 	d := time.Date(2012, 5, 31, 0, 0, 0, 0, time.UTC)
+	zerodt := time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 	testCases := []struct {
 		tt       string
 		value    string
@@ -63,7 +64,9 @@ func TestTextDecoder(t *testing.T) {
 		{"Float32", "1", float32(1)},
 		{"Float64", "1", float64(1)},
 		{"Date", "'2012-05-31'", d},
+		{"Date", "'0000-00-00'", zerodt},
 		{"DateTime", "'2011-03-06 06:20:00'", dt},
+		{"DateTime", "'0000-00-00 00:00:00'", zerodt},
 		{"DateTime(\\'Europe/Moscow\\')", "'2011-03-06 06:20:00'", dt},
 		{"String", "'hello'", "hello"},
 		{"String", `'\\\\\'hello'`, `\\'hello`},
