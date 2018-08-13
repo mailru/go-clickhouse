@@ -99,9 +99,17 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 	v := string(value)
 	switch t {
 	case "Date":
-		return time.ParseInLocation(dateFormat, unquote(v), d.location)
+		uv := unquote(v)
+		if uv == "0000-00-00" {
+			return time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC), nil
+		}
+		return time.ParseInLocation(dateFormat, uv, d.location)
 	case "DateTime":
-		return time.ParseInLocation(timeFormat, unquote(v), d.location)
+		uv := unquote(v)
+		if uv == "0000-00-00 00:00:00" {
+			return time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC), nil
+		}
+		return time.ParseInLocation(timeFormat, uv, d.location)
 	case "UInt8":
 		vv, err := strconv.ParseUint(v, 10, 8)
 		return uint8(vv), err
