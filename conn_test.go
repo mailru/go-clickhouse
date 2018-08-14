@@ -85,8 +85,13 @@ func (s *connSuite) TestExec() {
 		},
 		{
 			"INSERT INTO data (u64) VALUES (?)",
-			"",
-			[]interface{}{UInt64(uint64(1) << 63)},
+			"SELECT u64 FROM data WHERE u64=?",
+			[]interface{}{UInt64(maxAllowedUInt64)},
+		},
+		{
+			"INSERT INTO data (u64) VALUES (?)",
+			"SELECT u64 FROM data WHERE u64=?",
+			[]interface{}{UInt64(maxAllowedUInt64*2 + 1)},
 		},
 		{
 			"INSERT INTO data (d, t) VALUES (?, ?)",
