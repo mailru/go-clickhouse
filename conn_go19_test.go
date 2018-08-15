@@ -2,7 +2,7 @@
 
 package clickhouse
 
-func (s *connSuite) TestExec() {
+func (s *connSuite) TestExecBuild19() {
 	testCases := []struct {
 		query  string
 		query2 string
