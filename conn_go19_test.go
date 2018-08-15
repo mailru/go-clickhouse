@@ -2,7 +2,7 @@
 
 package clickhouse
 
-func (s *connSuite) TestExecGO19() {
+func (s *connSuite) TestExec() {
 	testCases := []struct {
 		query  string
 		query2 string
@@ -10,12 +10,12 @@ func (s *connSuite) TestExecGO19() {
 	}{
 		{
 			"INSERT INTO data (u64) VALUES (?)",
-			"",
+			"SELECT u64 FROM data WHERE u64=?",
 			[]interface{}{uint64(maxAllowedUInt64 - 1)},
 		},
 		{
 			"INSERT INTO data (u64) VALUES (?)",
-			"",
+			"SELECT u64 FROM data WHERE u64=?",
 			[]interface{}{uint64(maxAllowedUInt64 * 2)},
 		},
 	}
