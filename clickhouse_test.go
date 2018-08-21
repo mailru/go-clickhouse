@@ -51,7 +51,7 @@ type chSuite struct {
 func (s *chSuite) SetupSuite() {
 	dsn := os.Getenv("TEST_CLICKHOUSE_DSN")
 	if len(dsn) == 0 {
-		dsn = "http://localhost:8123/default"
+		dsn = "http://localhost:8123/default?buff_size=20"
 	}
 	conn, err := sql.Open("clickhouse", dsn)
 	s.Require().NoError(err)
@@ -108,6 +108,9 @@ func scanValues(rows *sql.Rows, template []interface{}) (interface{}, error) {
 			values[i] = reflect.ValueOf(p).Elem().Interface()
 		}
 		result = append(result, values)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return result, nil
 }

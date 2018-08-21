@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"reflect"
 	"strings"
@@ -51,35 +52,44 @@ func readResponse(response *http.Response) (result []byte, err error) {
 	return
 }
 
-func numOfColumns(data []byte) int {
-	cnt := 0
-	for _, ch := range data {
-		switch ch {
-		case '\t':
-			cnt++
-		case '\n':
-			return cnt + 1
-		}
+func readHeader(src io.Reader) (colNames, colTypes []string, err error) {
+	var (
+		colNamesString string
+		typesString    string
+	)
+	colNamesString, err = readStringUntil(src, '\n')
+	if err != nil {
+		return nil, nil, err
 	}
-	return -1
+	colNames = strings.Split(colNamesString, "\t")
+
+	typesString, err = readStringUntil(src, '\n')
+	if err != nil && err != io.EOF {
+		return nil, nil, err
+	}
+	colTypes = strings.Split(typesString, "\t")
+	if len(colNames) != len(colTypes) {
+		return nil, nil, ErrMalformed
+	}
+	return colNames, colTypes, nil
 }
 
-// splitTSV splits one row of tab separated values, returns begin of next row
-func splitTSV(data []byte, out []string) int {
-	i := 0
-	k := 0
-	for j, ch := range data {
-		switch ch {
-		case '\t':
-			out[k] = string(data[i:j])
-			k++
-			i = j + 1
-		case '\n':
-			out[k] = string(data[i:j])
-			return j + 1
+func readStringUntil(reader io.Reader, delimiter byte) (string, error) {
+	var (
+		buf    []byte
+		symbol = make([]byte, 1)
+		err    error
+	)
+
+	for {
+		if _, err = reader.Read(symbol); err != nil {
+			return string(buf), err
 		}
+		if symbol[0] == delimiter {
+			return string(buf), nil
+		}
+		buf = append(buf, symbol[0])
 	}
-	return -1
 }
 
 func columnType(name string) reflect.Type {

@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	defaultBuffSize = 1024 * 1024
+)
+
 // Config is a configuration parsed from a DSN string
 type Config struct {
 	User          string
@@ -23,6 +27,7 @@ type Config struct {
 	Debug         bool
 	UseDBLocation bool
 	Params        map[string]string
+	BuffSize      int64
 }
 
 // NewConfig creates a new config with default values
@@ -32,6 +37,7 @@ func NewConfig() *Config {
 		Host:        "localhost:8123",
 		IdleTimeout: time.Hour,
 		Location:    time.UTC,
+		BuffSize:    defaultBuffSize,
 	}
 }
 
@@ -57,6 +63,9 @@ func (cfg *Config) FormatDSN() string {
 	}
 	if cfg.Debug {
 		query.Set("debug", "1")
+	}
+	if cfg.BuffSize != defaultBuffSize {
+		query.Set("buff_size", strconv.Itoa(int(cfg.BuffSize)))
 	}
 
 	u.RawQuery = query.Encode()
@@ -147,6 +156,8 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 			cfg.Debug, err = strconv.ParseBool(v[0])
 		case "default_format", "query", "database":
 			err = fmt.Errorf("unknown option '%s'", k)
+		case "buff_size":
+			cfg.BuffSize, err = strconv.ParseInt(v[0], 0, 64)
 		default:
 			// lazy init
 			if cfg.Params == nil {
@@ -157,6 +168,10 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 		if err != nil {
 			return err
 		}
+	}
+
+	if cfg.BuffSize == 0 {
+		cfg.BuffSize = defaultBuffSize
 	}
 
 	return
