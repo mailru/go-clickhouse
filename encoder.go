@@ -20,7 +20,7 @@ var (
 )
 
 type encoder interface {
-	Encode(value driver.Value) string
+	Encode(value driver.Value) ([]byte, error)
 }
 
 type decoder interface {
@@ -35,7 +35,32 @@ type textDecoder struct {
 	useDBLocation bool
 }
 
-func (e *textEncoder) Encode(value driver.Value) string {
+// Encode encodes driver value into string
+// Note: there is 2 convention:
+// type string will be quoted
+// type []byte will be encoded as is (raw string)
+func (e *textEncoder) Encode(value driver.Value) ([]byte, error) {
+	switch v := value.(type) {
+	case array:
+		return e.encodeArray(reflect.ValueOf(v.v))
+	case []byte:
+		return v, nil
+	}
+
+	vv := reflect.ValueOf(value)
+	switch vv.Kind() {
+	case reflect.Interface, reflect.Ptr:
+		if vv.IsNil() {
+			return []byte("NULL"), nil
+		}
+		return e.Encode(vv.Elem().Interface())
+	case reflect.Slice, reflect.Array:
+		return e.encodeArray(vv)
+	}
+	return []byte(e.encode(value)), nil
+}
+
+func (e *textEncoder) encode(value driver.Value) string {
 	if value == nil {
 		return "NULL"
 	}
@@ -71,28 +96,32 @@ func (e *textEncoder) Encode(value driver.Value) string {
 		return strconv.FormatFloat(v, 'f', -1, 64)
 	case string:
 		return quote(escape(v))
-	case []byte:
-		return string(v)
 	case time.Time:
 		return formatTime(v)
 	}
 
-	vv := reflect.ValueOf(value)
-	switch vv.Kind() {
-	case reflect.Interface, reflect.Ptr:
-		return e.Encode(vv.Elem().Interface())
-	case reflect.Slice, reflect.Array:
-		res := "["
-		for i := 0; i < vv.Len(); i++ {
-			if i > 0 {
-				res += ","
-			}
-			res += e.Encode(vv.Index(i).Interface())
-		}
-		res += "]"
-		return res
-	}
 	return fmt.Sprint(value)
+}
+
+// EncodeArray encodes a go slice or array as Clickhouse Array
+func (e *textEncoder) encodeArray(value reflect.Value) ([]byte, error) {
+	if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
+		return nil, fmt.Errorf("expected array or slice, got %s", value.Kind())
+	}
+
+	res := make([]byte, 0)
+	res = append(res, '[')
+	for i := 0; i < value.Len(); i++ {
+		if i > 0 {
+			res = append(res, ',')
+		}
+		tmp, err := e.Encode(value.Index(i).Interface())
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, tmp...)
+	}
+	return append(res, ']'), nil
 }
 
 func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {

@@ -27,7 +27,7 @@ type array struct {
 
 // Value implements driver.Valuer
 func (a array) Value() (driver.Value, error) {
-	return []byte(textEncode.Encode(a.v)), nil
+	return textEncode.Encode(a)
 }
 
 type date time.Time
