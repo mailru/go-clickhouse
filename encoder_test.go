@@ -35,12 +35,19 @@ func TestTextEncoder(t *testing.T) {
 		{[]byte(`\\'hello`), `\\'hello`},
 		{[]int32{1, 2}, "[1,2]"},
 		{[]int32{}, "[]"},
-		{&d, "'2012-05-31 00:00:00'"},
+		{Array([]int8{1}), "[1]"},
+		{Array([]interface{}{Array([]int8{1})}), "[[1]]"},
+		{[][]int16{{1}}, "[[1]]"},
+		{[]int16(nil), "[]"},
+		{(*int16)(nil), "NULL"},
 	}
 
 	enc := new(textEncoder)
 	for _, tc := range testCases {
-		assert.Equal(t, tc.expected, enc.Encode(tc.value))
+		v, err := enc.Encode(tc.value)
+		if assert.NoError(t, err) {
+			assert.Equal(t, tc.expected, string(v))
+		}
 	}
 }
 

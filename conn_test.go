@@ -34,7 +34,7 @@ func (s *connSuite) TestQuery() {
 		{
 			"SELECT * FROM data WHERE u64=?",
 			[]interface{}{1},
-			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", "1", []int16{1},
+			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", "1", []int16{1}, []uint8{10},
 				parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one"}},
 		},
 		{
@@ -79,9 +79,9 @@ func (s *connSuite) TestExec() {
 			[]interface{}{int64(2), uint64(12)},
 		},
 		{
-			"INSERT INTO data (i64, a) VALUES (?, ?)",
+			"INSERT INTO data (i64, a16, a8) VALUES (?, ?, ?)",
 			"",
-			[]interface{}{int64(3), Array([]int16{1, 2})},
+			[]interface{}{int64(3), Array([]int16{1, 2}), Array([]uint8{10, 20})},
 		},
 		{
 			"INSERT INTO data (u64) VALUES (?)",
