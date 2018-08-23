@@ -44,21 +44,21 @@ func (s *connSuite) TestQuery() {
 		},
 	}
 
-	for _, tc := range testCases {
+	for i, tc := range testCases {
 		rows, err := s.conn.Query(tc.query, tc.args...)
-		if !s.NoError(err) {
+		if !s.NoError(err, "%d", i) {
 			continue
 		}
 		if len(tc.expected) == 0 {
-			s.False(rows.Next())
-			s.NoError(rows.Err())
+			s.False(rows.Next(), "%d", i)
+			s.NoError(rows.Err(), "%d", i)
 		} else {
 			v, err := scanValues(rows, tc.expected[0])
-			if s.NoError(err) {
-				s.Equal(tc.expected, v)
+			if s.NoError(err, "%d", i) {
+				s.Equal(tc.expected, v, "%d", i)
 			}
 		}
-		s.NoError(rows.Close())
+		s.NoError(rows.Close(), "%d", i)
 	}
 }
 

@@ -1,7 +1,9 @@
 package clickhouse
 
 import (
+	"bytes"
 	"database/sql/driver"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -10,8 +12,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTextRows(t *testing.T) {
-	rows, err := newTextRows([]byte("Number\tText\nInt32\tString\n1\t'hello'\n2\t'world'\n"), time.Local, false)
+func newBytesReaderCloser(data []byte) *bytesReaderCloser {
+	return &bytesReaderCloser{bytes.NewReader(data)}
+}
+
+type bytesReaderCloser struct {
+	*bytes.Reader
+}
+
+func (rc *bytesReaderCloser) Close() error {
+	return nil
+}
+
+func TestTextRowsOk(t *testing.T) {
+	data := []byte("Number\tText\nInt32\tString\n1\t'hello'\n2\t'world'\n")
+	rows, err := newTextRows(newBytesReaderCloser(data), 8, time.Local, false)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -32,8 +47,17 @@ func TestTextRows(t *testing.T) {
 		return
 	}
 	assert.Equal(t, []driver.Value{int32(2), "world"}, dest)
-	assert.Equal(t, 0, len(rows.data))
 	assert.Equal(t, io.EOF, rows.Next(dest))
 	assert.NoError(t, rows.Close())
-	assert.Nil(t, rows.data)
+}
+
+func TestTextRowsTooSmallBuffer(t *testing.T) {
+	data := []byte("Number\tText\nInt32\tString\n1\t'hello'\n")
+	rows, err := newTextRows(newBytesReaderCloser(data), 4, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	dest := make([]driver.Value, 2)
+	assert.Equal(t, errors.New("failed to fit column to buffer"), rows.Next(dest))
+	assert.NoError(t, rows.Close())
 }

@@ -26,6 +26,7 @@ type conn struct {
 	stmts         []*stmt
 	logger        *log.Logger
 	closed        int32
+	buffSize      int64
 }
 
 func newConn(cfg *Config) *conn {
@@ -47,7 +48,8 @@ func newConn(cfg *Config) *conn {
 			IdleConnTimeout:       cfg.IdleTimeout,
 			ResponseHeaderTimeout: cfg.ReadTimeout,
 		},
-		logger: logger,
+		logger:   logger,
+		buffSize: cfg.BuffSize,
 	}
 	// store userinfo in separate member, we will handle it manually
 	c.user = c.url.User
@@ -164,11 +166,11 @@ func (c *conn) query(ctx context.Context, query string, args []driver.Value) (dr
 	if err != nil {
 		return nil, err
 	}
-	body, err := c.doRequest(ctx, req)
+	resp, err := c.doRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return newTextRows(body, c.location, c.useDBLocation)
+	return newTextRows(resp.Body, c.buffSize, c.location, c.useDBLocation)
 }
 
 func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (driver.Result, error) {
@@ -179,11 +181,19 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	if err != nil {
 		return nil, err
 	}
-	_, err = c.doRequest(ctx, req)
+	_, err = c.doRequestAndRead(ctx, req)
 	return emptyResult, err
 }
 
-func (c *conn) doRequest(ctx context.Context, req *http.Request) ([]byte, error) {
+func (c *conn) doRequestAndRead(ctx context.Context, req *http.Request) ([]byte, error) {
+	r, err := c.doRequest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return readResponse(r)
+}
+
+func (c *conn) doRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	transport := c.transport
 	c.cancel = cancel
@@ -208,7 +218,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) ([]byte, error)
 		}
 		return nil, newError(string(msg))
 	}
-	return readResponse(resp)
+	return resp, nil
 }
 
 func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) (*http.Request, error) {

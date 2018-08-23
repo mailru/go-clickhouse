@@ -20,7 +20,7 @@ func (c *conn) Ping(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	resp, err := c.doRequest(ctx, req)
+	resp, err := c.doRequestAndRead(ctx, req)
 	if err != nil || len(resp) < 7 || string(resp[4:7]) != "Ok." {
 		return driver.ErrBadConn
 	}
