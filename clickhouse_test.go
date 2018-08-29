@@ -45,7 +45,8 @@ type dbInit struct {
 
 type chSuite struct {
 	suite.Suite
-	conn *sql.DB
+	conn                *sql.DB
+	connWithCompression *sql.DB
 }
 
 func (s *chSuite) SetupSuite() {
@@ -53,15 +54,24 @@ func (s *chSuite) SetupSuite() {
 	if len(dsn) == 0 {
 		dsn = "http://localhost:8123/default"
 	}
+
 	conn, err := sql.Open("clickhouse", dsn)
 	s.Require().NoError(err)
 	s.Require().NoError(initialzer.Do(conn))
 	s.conn = conn
+
+	connWithCompression, err := sql.Open("clickhouse", dsn+"?enable_http_compression=1")
+	s.Require().NoError(err)
+	s.connWithCompression = connWithCompression
 }
 
 func (s *chSuite) TearDownSuite() {
 	s.conn.Close()
 	_, err := s.conn.Query("SELECT 1")
+	s.EqualError(err, "sql: database is closed")
+
+	s.connWithCompression.Close()
+	_, err = s.connWithCompression.Query("SELECT 1")
 	s.EqualError(err, "sql: database is closed")
 }
 
