@@ -44,22 +44,30 @@ func (s *connSuite) TestQuery() {
 		},
 	}
 
-	for _, tc := range testCases {
-		rows, err := s.conn.Query(tc.query, tc.args...)
-		if !s.NoError(err) {
-			continue
-		}
-		if len(tc.expected) == 0 {
-			s.False(rows.Next())
-			s.NoError(rows.Err())
-		} else {
-			v, err := scanValues(rows, tc.expected[0])
-			if s.NoError(err) {
-				s.Equal(tc.expected, v)
+	doTests := func(conn *sql.DB) {
+		for _, tc := range testCases {
+			rows, err := conn.Query(tc.query, tc.args...)
+			if !s.NoError(err) {
+				continue
 			}
+			if len(tc.expected) == 0 {
+				s.False(rows.Next())
+				s.NoError(rows.Err())
+			} else {
+				v, err := scanValues(rows, tc.expected[0])
+				if s.NoError(err) {
+					s.Equal(tc.expected, v)
+				}
+			}
+			s.NoError(rows.Close())
 		}
-		s.NoError(rows.Close())
 	}
+
+	// Tests on regular connection
+	doTests(s.conn)
+
+	// Tests on connections with enabled compression
+	doTests(s.connWithCompression)
 }
 
 func (s *connSuite) TestExec() {
