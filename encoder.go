@@ -206,8 +206,10 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 	if strings.HasPrefix(t, "Array") {
 		if len(v) > 0 && v[0] == '[' && v[len(v)-1] == ']' {
 			var items []string
-			// check that array is not empty ([])
-			if len(v) > 2 {
+			// check if array is string encoded (['example'])
+			if len(v) > 4 && v[1] == '\'' && v[len(v)-2] == '\'' {
+				items = strings.Split(v[2:len(v)-2], "','")
+			} else if len(v) > 2 { // check that array is not empty ([])
 				items = strings.Split(v[1:len(v)-1], ",")
 			}
 
