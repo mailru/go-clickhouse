@@ -203,12 +203,11 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 	}
 	if resp.StatusCode != 200 {
 		msg, err := readResponse(resp)
-		if err != nil {
-			c.cancel = nil
-			return nil, err
-		}
 		c.cancel = nil
-		return nil, newError(string(msg))
+		if err == nil {
+			err = newError(string(msg))
+		}
+		return nil, err
 	}
 
 	return resp.Body, nil
