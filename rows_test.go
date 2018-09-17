@@ -1,8 +1,10 @@
 package clickhouse
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"io"
+	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
@@ -10,8 +12,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type bufReadCloser struct {
+	*bytes.Reader
+}
+
+func (r *bufReadCloser) Close() error {
+	return nil
+}
+
 func TestTextRows(t *testing.T) {
-	rows, err := newTextRows([]byte("Number\tText\nInt32\tString\n1\t'hello'\n2\t'world'\n"), time.Local, false)
+	buf := bytes.NewReader([]byte("Number\tText\nInt32\tString\n1\t'hello'\n2\t'world'\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -32,8 +43,13 @@ func TestTextRows(t *testing.T) {
 		return
 	}
 	assert.Equal(t, []driver.Value{int32(2), "world"}, dest)
-	assert.Equal(t, 0, len(rows.data))
+	data, err := ioutil.ReadAll(rows.respBody)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.Equal(t, 0, len(data))
 	assert.Equal(t, io.EOF, rows.Next(dest))
 	assert.NoError(t, rows.Close())
-	assert.Nil(t, rows.data)
+	assert.Empty(t, data)
 }
