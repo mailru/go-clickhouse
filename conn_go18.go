@@ -5,8 +5,10 @@ package clickhouse
 import (
 	"context"
 	"database/sql/driver"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 // Ping implements the driver.Pinger
@@ -20,8 +22,15 @@ func (c *conn) Ping(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	resp, err := c.doRequest(ctx, req)
-	if err != nil || len(resp) < 7 || string(resp[4:7]) != "Ok." {
+	respBody, err := c.doRequest(ctx, req)
+	defer func() {
+		c.cancel = nil
+	}()
+	if err != nil {
+		return driver.ErrBadConn
+	}
+	resp, err := ioutil.ReadAll(respBody)
+	if err != nil || len(resp) != 4 || !strings.HasPrefix(string(resp), "Ok.") {
 		return driver.ErrBadConn
 	}
 	return nil

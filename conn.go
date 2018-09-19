@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -168,7 +169,8 @@ func (c *conn) query(ctx context.Context, query string, args []driver.Value) (dr
 	if err != nil {
 		return nil, err
 	}
-	return newTextRows(body, c.location, c.useDBLocation)
+
+	return newTextRows(c, body, c.location, c.useDBLocation)
 }
 
 func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (driver.Result, error) {
@@ -183,32 +185,32 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	return emptyResult, err
 }
 
-func (c *conn) doRequest(ctx context.Context, req *http.Request) ([]byte, error) {
+func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	transport := c.transport
 	c.cancel = cancel
 
-	defer func() {
-		c.cancel = nil
-	}()
-
 	if transport == nil {
+		c.cancel = nil
 		return nil, driver.ErrBadConn
 	}
 
 	req = req.WithContext(ctx)
 	resp, err := transport.RoundTrip(req)
 	if err != nil {
+		c.cancel = nil
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
 		msg, err := readResponse(resp)
-		if err != nil {
-			return nil, err
+		c.cancel = nil
+		if err == nil {
+			err = newError(string(msg))
 		}
-		return nil, newError(string(msg))
+		return nil, err
 	}
-	return readResponse(resp)
+
+	return resp.Body, nil
 }
 
 func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) (*http.Request, error) {
