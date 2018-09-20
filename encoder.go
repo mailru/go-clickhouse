@@ -210,7 +210,7 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 			// check that array is not empty ([])
 			if len(v) > 2 {
 				// check if array of strings and not empty (['example'])
-				if (subType == "String" || strings.HasPrefix(subType, "FixedString")) && len(v) > 4 {
+				if subType == "String" || strings.HasPrefix(subType, "FixedString") {
 					items = strings.Split(v[2:len(v)-2], "','")
 					for i, v := range items {
 						items[i] = unescape(v)
