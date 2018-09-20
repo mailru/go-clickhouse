@@ -207,7 +207,7 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 		if len(v) > 0 && v[0] == '[' && v[len(v)-1] == ']' {
 			var items []string
 			subType := t[6 : len(t)-1]
-			// check if array is string encoded (['example'])
+			// check if array of strings and not empty (['example'])
 			if (subType == "String" || strings.HasPrefix(subType, "FixedString")) && len(v) > 4 {
 				items = strings.Split(v[2:len(v)-2], "','")
 				for i, v := range items {
