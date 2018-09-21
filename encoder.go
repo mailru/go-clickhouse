@@ -206,12 +206,20 @@ func (d *textDecoder) Decode(t string, value []byte) (driver.Value, error) {
 	if strings.HasPrefix(t, "Array") {
 		if len(v) > 0 && v[0] == '[' && v[len(v)-1] == ']' {
 			var items []string
+			subType := t[6 : len(t)-1]
 			// check that array is not empty ([])
 			if len(v) > 2 {
-				items = strings.Split(v[1:len(v)-1], ",")
+				// check if array of strings and not empty (['example'])
+				if subType == "String" || strings.HasPrefix(subType, "FixedString") {
+					items = strings.Split(v[2:len(v)-2], "','")
+					for i, v := range items {
+						items[i] = unescape(v)
+					}
+				} else {
+					items = strings.Split(v[1:len(v)-1], ",")
+				}
 			}
 
-			subType := t[6 : len(t)-1]
 			r := reflect.MakeSlice(reflect.SliceOf(columnType(subType)), len(items), len(items))
 			for i, item := range items {
 				vv, err := d.Decode(subType, []byte(item))

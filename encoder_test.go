@@ -83,6 +83,10 @@ func TestTextDecoder(t *testing.T) {
 		{"Enum16('one'=1)", "'one'", "one"},
 		{"Array(UInt32)", "[1,2]", []uint32{1, 2}},
 		{"Array(UInt32)", "[]", []uint32{}},
+		{"Array(String)", "['one, two','one\\'']", []string{"one, two", "one'"}},
+		{"Array(String)", "['']", []string{""}},
+		{"Array(String)", "[]", []string{}},
+		{"Array(FixedString(3)", "['1,2','2,3']", []string{"1,2", "2,3"}},
 	}
 
 	dec := &textDecoder{location: time.UTC, useDBLocation: false}
