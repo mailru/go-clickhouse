@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -55,6 +56,21 @@ func TestParseWrongDSN(t *testing.T) {
 	for _, tc := range testCases {
 		_, err := ParseDSN(tc)
 		assert.Error(t, err)
+	}
+}
+
+func TestParseWrongDSNParams(t *testing.T) {
+	testCases := map[string][]string{
+		"enable_http_compression": {"foo"},
+		"timeout":                 {"50"},
+		"database":                {"whatever"},
+	}
+
+	for name, value := range testCases {
+		cfg := NewConfig()
+		err := parseDSNParams(cfg, map[string][]string{name: value,})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), fmt.Sprintf( "failed to parse param %s=%v", name, value))
 	}
 }
 

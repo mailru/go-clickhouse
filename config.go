@@ -161,7 +161,7 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 			cfg.Params[k] = v[0]
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse param %s=%v, %+v", k, v, err)
 		}
 	}
 
