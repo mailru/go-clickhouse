@@ -29,7 +29,7 @@ func parseTypeDesc(tokens []*token) (*TypeDesc, []*token, error) {
 		return &desc, tokens[1:], nil
 	}
 
-	if name == "Enum" {
+	if name == "Enum8" || name == "Enum16" {
 		// TODO: an Enum's arguments get completely ignored
 		for i := range tokens {
 			if tokens[i].kind == ')' {

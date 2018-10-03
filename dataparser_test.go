@@ -83,7 +83,7 @@ func TestParseData(t *testing.T) {
 		},
 		{
 			name: "enum",
-			inputtype: "Enum('hello' = 1, 'world' = 2)",
+			inputtype: "Enum8('hello' = 1, 'world' = 2)",
 			inputdata: "hello",
 			output: "hello",
 		},

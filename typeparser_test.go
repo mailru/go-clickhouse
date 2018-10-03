@@ -42,8 +42,8 @@ func TestParseTypeDesc(t *testing.T) {
 		},
 		{
 			name: "args are ignored for Enum",
-			input: "Enum(you can = put, 'whatever' here)",
-			output: &TypeDesc{Name: "Enum"},
+			input: "Enum8(you can = put, 'whatever' here)",
+			output: &TypeDesc{Name: "Enum8"},
 		},
 		{
 			name: "quoted arg",

@@ -346,8 +346,7 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 	case "Int64": return &intParser{true, 64}, nil
 	case "Float32": return &floatParser{32}, nil
 	case "Float64": return &floatParser{64}, nil
-	case "String": return &stringParser{unquote: unquote}, nil
-	case "Enum": return &stringParser{unquote: unquote}, nil
+	case "String", "Enum8", "Enum16": return &stringParser{unquote: unquote}, nil
 	case "FixedString":
 		if len(t.Args) != 1 {
 			return nil, fmt.Errorf("length not specified for FixedString")
