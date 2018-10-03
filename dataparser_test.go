@@ -140,8 +140,8 @@ func TestParseData(t *testing.T) {
 		{
 			name: "array of strings",
 			inputtype: "Array(String)",
-			inputdata: "['hello world','goodbye galaxy']",
-			output: []string{"hello world", "goodbye galaxy"},
+			inputdata: `['hello world\',','goodbye galaxy']`,
+			output: []string{"hello world',", "goodbye galaxy"},
 		},
 		{
 			name: "array of unquoted strings",
