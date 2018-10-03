@@ -3,33 +3,22 @@ package clickhouse
 import (
 	"bytes"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 )
 
 var (
 	escaper   = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
-	unescaper = strings.NewReplacer(`\\`, `\`, `\'`, `'`)
+	dateFormat     = "2006-01-02"
+	timeFormat     = "2006-01-02 15:04:05"
 )
 
 func escape(s string) string {
 	return escaper.Replace(s)
 }
 
-func unescape(s string) string {
-	return unescaper.Replace(s)
-}
-
 func quote(s string) string {
 	return "'" + s + "'"
-}
-
-func unquote(s string) string {
-	if len(s) > 0 && s[0] == '\'' && s[len(s)-1] == '\'' {
-		return s[1 : len(s)-1]
-	}
-	return s
 }
 
 func formatTime(value time.Time) string {
@@ -80,47 +69,4 @@ func splitTSV(data []byte, out []string) int {
 		}
 	}
 	return -1
-}
-
-func columnType(name string) reflect.Type {
-	switch name {
-	case "Date", "DateTime":
-		return reflect.ValueOf(time.Time{}).Type()
-	case "UInt8":
-		return reflect.ValueOf(uint8(0)).Type()
-	case "UInt16":
-		return reflect.ValueOf(uint16(0)).Type()
-	case "UInt32":
-		return reflect.ValueOf(uint32(0)).Type()
-	case "UInt64":
-		return reflect.ValueOf(uint64(0)).Type()
-	case "Int8":
-		return reflect.ValueOf(int8(0)).Type()
-	case "Int16":
-		return reflect.ValueOf(int16(0)).Type()
-	case "Int32":
-		return reflect.ValueOf(int32(0)).Type()
-	case "Int64":
-		return reflect.ValueOf(int64(0)).Type()
-	case "Float32":
-		return reflect.ValueOf(float32(0)).Type()
-	case "Float64":
-		return reflect.ValueOf(float64(0)).Type()
-	case "String":
-		return reflect.ValueOf("").Type()
-	}
-	if strings.HasPrefix(name, "FixedString") {
-		return reflect.ValueOf("").Type()
-	}
-	if strings.HasPrefix(name, "Array") {
-		subType := columnType(name[6 : len(name)-1])
-		if subType != nil {
-			return reflect.SliceOf(subType)
-		}
-		return nil
-	}
-	if strings.HasPrefix(name, "Enum") {
-		return reflect.ValueOf("").Type()
-	}
-	return nil
 }
