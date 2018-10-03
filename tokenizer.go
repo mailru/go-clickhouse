@@ -85,7 +85,7 @@ loop:
 	return &token{'q', data.String()}, nil
 }
 
-func readString(s io.RuneScanner) *token {
+func readNumberOrID(s io.RuneScanner) *token {
 	var data strings.Builder
 
 loop:
@@ -133,7 +133,7 @@ loop:
 			}
 		default:
 			s.UnreadRune()
-			t = readString(s)
+			t = readNumberOrID(s)
 		}
 
 		tokens = append(tokens, t)
