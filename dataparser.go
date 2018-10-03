@@ -10,7 +10,8 @@ import (
 	"time"
 )
 
-type dataParser interface {
+// DataParser implements parsing of a driver value and reporting its type.
+type DataParser interface {
 	Parse(io.RuneScanner) (driver.Value, error)
 	Type() reflect.Type
 }
@@ -127,7 +128,7 @@ func (p *dateTimeParser) Type() reflect.Type {
 }
 
 type arrayParser struct{
-	arg dataParser
+	arg DataParser
 }
 
 func (p *arrayParser) Type() reflect.Type {
@@ -135,7 +136,7 @@ func (p *arrayParser) Type() reflect.Type {
 }
 
 type tupleParser struct{
-	args []dataParser
+	args []DataParser
 }
 
 func (p *tupleParser) Type() reflect.Type {
@@ -215,7 +216,7 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 }
 
 
-func newDateTimeParser(format, locname string, unquote bool) (dataParser, error) {
+func newDateTimeParser(format, locname string, unquote bool) (DataParser, error) {
 	loc, err := time.LoadLocation(locname)
 	if err != nil {
 		return nil, err
@@ -315,7 +316,13 @@ func (p *nothingParser) Type() reflect.Type {
 	return reflect.ValueOf(struct{}{}).Type()
 }
 
-func newDataParser(t *TypeDesc, unquote bool) (dataParser, error) {
+// NewDataParser creates a new DataParser based on the
+// given TypeDesc.
+func NewDataParser(t *TypeDesc) (DataParser, error) {
+	return newDataParser(t, false)
+}
+
+func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 	switch t.Name {
 	case "Nothing": return &nothingParser{}, nil
 	case "Nullable": return nil, fmt.Errorf("Nullable types are not supported")
@@ -340,6 +347,7 @@ func newDataParser(t *TypeDesc, unquote bool) (dataParser, error) {
 	case "Float32": return &floatParser{32}, nil
 	case "Float64": return &floatParser{64}, nil
 	case "String": return &stringParser{unquote: unquote}, nil
+	case "Enum": return &stringParser{unquote: unquote}, nil
 	case "FixedString":
 		if len(t.Args) != 1 {
 			return nil, fmt.Errorf("length not specified for FixedString")
@@ -362,7 +370,7 @@ func newDataParser(t *TypeDesc, unquote bool) (dataParser, error) {
 		if len(t.Args) < 1 {
 			return nil, fmt.Errorf("element types not specified for Tuple")
 		}
-		subParsers := make([]dataParser, len(t.Args), len(t.Args))
+		subParsers := make([]DataParser, len(t.Args), len(t.Args))
 		for i, arg := range t.Args {
 			subParser, err := newDataParser(arg, true)
 			if err != nil {

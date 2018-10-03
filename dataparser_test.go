@@ -82,6 +82,12 @@ func TestParseData(t *testing.T) {
 			output: time.Time{},
 		},
 		{
+			name: "enum",
+			inputtype: "Enum('hello' = 1, 'world' = 2)",
+			inputdata: "hello",
+			output: "hello",
+		},
+		{
 			name: "datetime",
 			inputtype: "DateTime",
 			inputdata: "2018-01-02 12:34:56",

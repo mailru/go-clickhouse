@@ -29,6 +29,16 @@ func parseTypeDesc(tokens []*token) (*TypeDesc, []*token, error) {
 		return &desc, tokens[1:], nil
 	}
 
+	if name == "Enum" {
+		// TODO: an Enum's arguments get completely ignored
+		for i := range tokens {
+			if tokens[i].kind == ')' {
+				return &desc, tokens[i+1:], nil
+			}
+		}
+		return nil, nil, fmt.Errorf("unfinished enum type description")
+	}
+
 	for {
 		var arg *TypeDesc
 		var err error
