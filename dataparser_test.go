@@ -1,7 +1,6 @@
 package clickhouse
 
 import (
-	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -272,8 +271,6 @@ func TestParseData(t *testing.T) {
 			if !assert.NoError(tt, err) {
 				return
 			}
-
-			fmt.Printf("%T: %#v\n", output, output)
 
 			assert.Equal(tt, tc.output, output)
 		})

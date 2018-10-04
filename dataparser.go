@@ -1,12 +1,12 @@
 package clickhouse
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"fmt"
 	"io"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -28,7 +28,7 @@ type dateTimeParser struct {
 }
 
 func readNumber(s io.RuneScanner) (string, error) {
-	var builder strings.Builder
+	var builder bytes.Buffer
 
 loop:
 	for {
@@ -49,7 +49,7 @@ loop:
 }
 
 func readUnquoted(s io.RuneScanner, length int) (string, error) {
-	var builder strings.Builder
+	var builder bytes.Buffer
 
 	runesRead := 0
 loop:

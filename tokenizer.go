@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -60,7 +61,7 @@ func readEscaped(s io.RuneScanner) (rune, error) {
 }
 
 func readQuoted(s io.RuneScanner) (*token, error) {
-	var data strings.Builder
+	var data bytes.Buffer
 
 loop:
 	for {
@@ -86,7 +87,7 @@ loop:
 }
 
 func readNumberOrID(s io.RuneScanner) *token {
-	var data strings.Builder
+	var data bytes.Buffer
 
 loop:
 	for {
