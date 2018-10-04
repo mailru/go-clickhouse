@@ -18,12 +18,12 @@ type DataParser interface {
 
 type stringParser struct {
 	unquote bool
-	length int
+	length  int
 }
 
 type dateTimeParser struct {
-	unquote bool
-	format string
+	unquote  bool
+	format   string
 	location *time.Location
 }
 
@@ -127,7 +127,7 @@ func (p *dateTimeParser) Type() reflect.Type {
 	return reflect.ValueOf(time.Time{}).Type()
 }
 
-type arrayParser struct{
+type arrayParser struct {
 	arg DataParser
 }
 
@@ -135,7 +135,7 @@ func (p *arrayParser) Type() reflect.Type {
 	return reflect.SliceOf(p.arg.Type())
 }
 
-type tupleParser struct{
+type tupleParser struct {
 	args []DataParser
 }
 
@@ -179,7 +179,6 @@ func (p *tupleParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	return struc.Interface(), nil
 }
 
-
 func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	r := read(s)
 	if r != '[' {
@@ -187,7 +186,7 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	}
 
 	slice := reflect.MakeSlice(p.Type(), 0, 0)
-	for i := 0;; i++ {
+	for i := 0; ; i++ {
 		r := read(s)
 		s.UnreadRune()
 		if r == ']' {
@@ -215,21 +214,20 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	return slice.Interface(), nil
 }
 
-
 func newDateTimeParser(format, locname string, unquote bool) (DataParser, error) {
 	loc, err := time.LoadLocation(locname)
 	if err != nil {
 		return nil, err
 	}
 	return &dateTimeParser{
-		unquote: unquote,
-		format: format,
+		unquote:  unquote,
+		format:   format,
 		location: loc,
 	}, nil
 }
 
 type intParser struct {
-	signed bool
+	signed  bool
 	bitSize int
 }
 
@@ -246,20 +244,30 @@ func (p *intParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	if p.signed {
 		v, err := strconv.ParseInt(repr, 10, p.bitSize)
 		switch p.bitSize {
-		case 8: return int8(v), err
-		case 16: return int16(v), err
-		case 32: return int32(v), err
-		case 64: return int64(v), err
-		default: panic("unsupported bit size")
+		case 8:
+			return int8(v), err
+		case 16:
+			return int16(v), err
+		case 32:
+			return int32(v), err
+		case 64:
+			return int64(v), err
+		default:
+			panic("unsupported bit size")
 		}
 	} else {
 		v, err := strconv.ParseUint(repr, 10, p.bitSize)
 		switch p.bitSize {
-		case 8: return uint8(v), err
-		case 16: return uint16(v), err
-		case 32: return uint32(v), err
-		case 64: return uint64(v), err
-		default: panic("unsupported bit size")
+		case 8:
+			return uint8(v), err
+		case 16:
+			return uint16(v), err
+		case 32:
+			return uint32(v), err
+		case 64:
+			return uint64(v), err
+		default:
+			panic("unsupported bit size")
 		}
 	}
 }
@@ -267,19 +275,29 @@ func (p *intParser) Parse(s io.RuneScanner) (driver.Value, error) {
 func (p *intParser) Type() reflect.Type {
 	if p.signed {
 		switch p.bitSize {
-		case 8: return reflect.ValueOf(int8(0)).Type()
-		case 16: return reflect.ValueOf(int16(0)).Type()
-		case 32: return reflect.ValueOf(int32(0)).Type()
-		case 64: return reflect.ValueOf(int64(0)).Type()
-		default: panic("unsupported bit size")
+		case 8:
+			return reflect.ValueOf(int8(0)).Type()
+		case 16:
+			return reflect.ValueOf(int16(0)).Type()
+		case 32:
+			return reflect.ValueOf(int32(0)).Type()
+		case 64:
+			return reflect.ValueOf(int64(0)).Type()
+		default:
+			panic("unsupported bit size")
 		}
 	} else {
 		switch p.bitSize {
-		case 8: return reflect.ValueOf(uint8(0)).Type()
-		case 16: return reflect.ValueOf(uint16(0)).Type()
-		case 32: return reflect.ValueOf(uint32(0)).Type()
-		case 64: return reflect.ValueOf(uint64(0)).Type()
-		default: panic("unsupported bit size")
+		case 8:
+			return reflect.ValueOf(uint8(0)).Type()
+		case 16:
+			return reflect.ValueOf(uint16(0)).Type()
+		case 32:
+			return reflect.ValueOf(uint32(0)).Type()
+		case 64:
+			return reflect.ValueOf(uint64(0)).Type()
+		default:
+			panic("unsupported bit size")
 		}
 	}
 }
@@ -292,17 +310,23 @@ func (p *floatParser) Parse(s io.RuneScanner) (driver.Value, error) {
 
 	v, err := strconv.ParseFloat(repr, p.bitSize)
 	switch p.bitSize {
-	case 32: return float32(v), err
-	case 64: return float64(v), err
-	default: panic("unsupported bit size")
+	case 32:
+		return float32(v), err
+	case 64:
+		return float64(v), err
+	default:
+		panic("unsupported bit size")
 	}
 }
 
 func (p *floatParser) Type() reflect.Type {
 	switch p.bitSize {
-	case 32: return reflect.ValueOf(float32(0)).Type()
-	case 64: return reflect.ValueOf(float64(0)).Type()
-	default: panic("unsupported bit size")
+	case 32:
+		return reflect.ValueOf(float32(0)).Type()
+	case 64:
+		return reflect.ValueOf(float64(0)).Type()
+	default:
+		panic("unsupported bit size")
 	}
 }
 
@@ -324,8 +348,10 @@ func NewDataParser(t *TypeDesc) (DataParser, error) {
 
 func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 	switch t.Name {
-	case "Nothing": return &nothingParser{}, nil
-	case "Nullable": return nil, fmt.Errorf("Nullable types are not supported")
+	case "Nothing":
+		return &nothingParser{}, nil
+	case "Nullable":
+		return nil, fmt.Errorf("Nullable types are not supported")
 	case "Date":
 		// FIXME: support custom default/override location
 		return newDateTimeParser("2006-01-02", "UTC", unquote)
@@ -336,23 +362,34 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 			locname = t.Args[0].Name
 		}
 		return newDateTimeParser("2006-01-02 15:04:05", locname, unquote)
-	case "UInt8": return &intParser{false, 8}, nil
-	case "UInt16": return &intParser{false, 16}, nil
-	case "UInt32": return &intParser{false, 32}, nil
-	case "UInt64": return &intParser{false, 64}, nil
-	case "Int8": return &intParser{true, 8}, nil
-	case "Int16": return &intParser{true, 16}, nil
-	case "Int32": return &intParser{true, 32}, nil
-	case "Int64": return &intParser{true, 64}, nil
-	case "Float32": return &floatParser{32}, nil
-	case "Float64": return &floatParser{64}, nil
-	case "String", "Enum8", "Enum16": return &stringParser{unquote: unquote}, nil
+	case "UInt8":
+		return &intParser{false, 8}, nil
+	case "UInt16":
+		return &intParser{false, 16}, nil
+	case "UInt32":
+		return &intParser{false, 32}, nil
+	case "UInt64":
+		return &intParser{false, 64}, nil
+	case "Int8":
+		return &intParser{true, 8}, nil
+	case "Int16":
+		return &intParser{true, 16}, nil
+	case "Int32":
+		return &intParser{true, 32}, nil
+	case "Int64":
+		return &intParser{true, 64}, nil
+	case "Float32":
+		return &floatParser{32}, nil
+	case "Float64":
+		return &floatParser{64}, nil
+	case "String", "Enum8", "Enum16":
+		return &stringParser{unquote: unquote}, nil
 	case "FixedString":
 		if len(t.Args) != 1 {
 			return nil, fmt.Errorf("length not specified for FixedString")
 		}
 		length, err := strconv.Atoi(t.Args[0].Name)
-		if err != nil{
+		if err != nil {
 			return nil, fmt.Errorf("malformed length specified for FixedString: %v", err)
 		}
 		return &stringParser{unquote: unquote, length: length}, nil

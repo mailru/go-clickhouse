@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	escaper   = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
-	dateFormat     = "2006-01-02"
-	timeFormat     = "2006-01-02 15:04:05"
+	escaper    = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
+	dateFormat = "2006-01-02"
+	timeFormat = "2006-01-02 15:04:05"
 )
 
 func escape(s string) string {

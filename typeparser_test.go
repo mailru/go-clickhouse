@@ -8,19 +8,19 @@ import (
 
 func TestParseTypeDesc(t *testing.T) {
 	type testCase struct {
-		name string
-		input string
+		name   string
+		input  string
 		output *TypeDesc
-		fail  bool
+		fail   bool
 	}
 	testCases := []*testCase{
 		{
-			name: "plain type",
-			input: "String",
+			name:   "plain type",
+			input:  "String",
 			output: &TypeDesc{Name: "String"},
 		},
 		{
-			name: "nullable type",
+			name:  "nullable type",
 			input: "Nullable(Nothing)",
 			output: &TypeDesc{
 				Name: "Nullable",
@@ -28,12 +28,12 @@ func TestParseTypeDesc(t *testing.T) {
 			},
 		},
 		{
-			name: "empty arg",
-			input: "DateTime()",
+			name:   "empty arg",
+			input:  "DateTime()",
 			output: &TypeDesc{Name: "DateTime"},
 		},
 		{
-			name: "numeric arg",
+			name:  "numeric arg",
 			input: "FixedString(42)",
 			output: &TypeDesc{
 				Name: "FixedString",
@@ -41,12 +41,12 @@ func TestParseTypeDesc(t *testing.T) {
 			},
 		},
 		{
-			name: "args are ignored for Enum",
-			input: "Enum8(you can = put, 'whatever' here)",
+			name:   "args are ignored for Enum",
+			input:  "Enum8(you can = put, 'whatever' here)",
 			output: &TypeDesc{Name: "Enum8"},
 		},
 		{
-			name: "quoted arg",
+			name:  "quoted arg",
 			input: "DateTime('UTC')",
 			output: &TypeDesc{
 				Name: "DateTime",
@@ -54,7 +54,7 @@ func TestParseTypeDesc(t *testing.T) {
 			},
 		},
 		{
-			name: "quoted escaped arg",
+			name:  "quoted escaped arg",
 			input: `DateTime('UTC\b\r\n\'\f\t\0')`,
 			output: &TypeDesc{
 				Name: "DateTime",
@@ -62,7 +62,7 @@ func TestParseTypeDesc(t *testing.T) {
 			},
 		},
 		{
-			name: "nested args",
+			name:  "nested args",
 			input: "Array(Tuple(Tuple(String, String), Tuple(String, UInt64)))",
 			output: &TypeDesc{
 				Name: "Array",
@@ -84,29 +84,29 @@ func TestParseTypeDesc(t *testing.T) {
 			},
 		},
 		{
-			name: "unfinished arg list",
+			name:  "unfinished arg list",
 			input: "Array(Tuple(Tuple(String, String), Tuple(String, UInt64))",
-			fail: true,
+			fail:  true,
 		},
 		{
-			name: "left paren without name",
+			name:  "left paren without name",
 			input: "(",
-			fail: true,
+			fail:  true,
 		},
 		{
-			name: "unfinished quote",
+			name:  "unfinished quote",
 			input: "Array(')",
-			fail: true,
+			fail:  true,
 		},
 		{
-			name: "unfinished escape",
+			name:  "unfinished escape",
 			input: `Array(\`,
-			fail: true,
+			fail:  true,
 		},
 		{
-			name: "stuff after end",
+			name:  "stuff after end",
 			input: `Array() String`,
-			fail: true,
+			fail:  true,
 		},
 	}
 

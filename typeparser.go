@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// TypeDesc describes a (possibly nested) data type returned by ClickHouse.
 type TypeDesc struct {
 	Name string
 	Args []*TypeDesc

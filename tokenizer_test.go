@@ -8,24 +8,24 @@ import (
 
 func TestTokenize(t *testing.T) {
 	type testCase struct {
-		name string
-		input string
+		name   string
+		input  string
 		output []*token
-		fail  bool
+		fail   bool
 	}
 	testCases := []*testCase{
 		{
-			name: "empty",
-			input: "",
+			name:   "empty",
+			input:  "",
 			output: []*token{{eof, ""}},
 		},
 		{
-			name: "only whitespace",
-			input: "",
+			name:   "only whitespace",
+			input:  "",
 			output: []*token{{eof, ""}},
 		},
 		{
-			name: "whitespace all over the place",
+			name:  "whitespace all over the place",
 			input: "   \t\nhello   \t  \n   world   \n",
 			output: []*token{
 				{'s', "hello"},
@@ -34,7 +34,7 @@ func TestTokenize(t *testing.T) {
 			},
 		},
 		{
-			name: "complex with quotes and escaping",
+			name:  "complex with quotes and escaping",
 			input: `Array(Tuple(FixedString(5), Float32, 'hello, \') world'))`,
 			output: []*token{
 				{'s', "Array"},
@@ -55,14 +55,14 @@ func TestTokenize(t *testing.T) {
 			},
 		},
 		{
-			name: "unclosed quote",
+			name:  "unclosed quote",
 			input: "Array(')",
-			fail: true,
+			fail:  true,
 		},
 		{
-			name: "unfinished escape",
+			name:  "unfinished escape",
 			input: `Array('\`,
-			fail: true,
+			fail:  true,
 		},
 	}
 
