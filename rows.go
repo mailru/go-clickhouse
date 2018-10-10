@@ -23,6 +23,12 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 	if err != nil {
 		return nil, err
 	}
+	for i := range types {
+		types[i], err = readUnquoted(strings.NewReader(types[i]), 0)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	parsers := make([]DataParser, len(types), len(types))
 	for i, typ := range types {
