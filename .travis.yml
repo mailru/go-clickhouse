@@ -12,18 +12,16 @@ services:
 
 before_install:
   - travis_retry docker pull yandex/clickhouse-server
-  - docker run -d -p 127.0.0.1:8123:8123 --name dbr-clickhouse-server yandex/clickhouse-server
+  - make up_docker_server
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 install:
-  - travis_retry dep ensure -v
-  - go install ./vendor/...
+  - make init
+  - travis_retry go get -v github.com/mattn/goveralls/...
 
 before_script:
   - export TEST_CLICKHOUSE_DSN="http://localhost:8123/default"
 
 script:
-  - test -z "$(golint ./... | grep -v vendor | tee /dev/stderr)"
-  - go vet ./...
-  - test -z "$(gofmt -d -s $(find . -name \*.go -print | grep -v vendor) | tee /dev/stderr)"
-  - go test -v -covermode=count -coverprofile=coverage.out .
+  - make test
   - goveralls -coverprofile=coverage.out -service=travis-ci

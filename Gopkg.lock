@@ -10,12 +10,15 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:d1f70995feb8132ca8e99b8bba29823c3273f68c239d9ecd93fa5442a56d546f"
-  name = "github.com/mattn/goveralls"
-  packages = ["."]
+  branch = "travis-1.9"
+  digest = "1:e8f5d9c09a7209c740e769713376abda388c41b777ba8e9ed52767e21acf379f"
+  name = "github.com/golang/lint"
+  packages = [
+    ".",
+    "golint",
+  ]
   pruneopts = "UT"
-  revision = "b71a1e4855f87991aff01c2c833a75a07059c61c"
-  version = "v0.0.2"
+  revision = "883fe33ffc4344bad1ecd881f61afd5ec5d80e0a"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -39,9 +42,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1823635465fafd46fb48e79ed2a8fd05464543d625d008d9142a144f785b7a88"
+  digest = "1:e9c3bc86738be0a8025fe254cef7fd5e39048c6bbb69f60992fa057ba59a43ad"
   name = "golang.org/x/tools"
-  packages = ["cover"]
+  packages = [
+    "go/gcexportdata",
+    "go/internal/gcimporter",
+    "go/types/typeutil",
+  ]
   pruneopts = "UT"
   revision = "5d4988d199e2aeefda3528f599e06410c43caa29"
 
@@ -49,7 +56,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/mattn/goveralls",
+    "github.com/golang/lint/golint",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/suite",
   ]

@@ -24,7 +24,8 @@
 #   go-tests = true
 #   unused-packages = true
 
-required = ["github.com/mattn/goveralls"]
+# for tests
+required = ["github.com/golang/lint/golint"]
 
 [[constraint]]
   name = "github.com/stretchr/testify"
