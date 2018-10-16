@@ -200,3 +200,14 @@ func main() {
 
 ## Go versions
 Officially support last 3 golang releases
+
+
+## Development:
+You can check the effect of changes on Travis CI or run tests locally:
+
+``` bash
+make init # dep ensure and install
+make test
+```
+
+_Remember that `init` will add a few binaries used for testing (like `golint`) into your GOPATH_
