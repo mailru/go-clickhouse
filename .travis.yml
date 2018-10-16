@@ -16,6 +16,7 @@ before_install:
 
 install:
   - travis_retry dep ensure -v
+  - go install ./vendor/...
 
 before_script:
   - export TEST_CLICKHOUSE_DSN="http://localhost:8123/default"
