@@ -11,6 +11,7 @@ import (
 func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLocation bool) (*textRows, error) {
 	tsvReader := csv.NewReader(body)
 	tsvReader.Comma = '\t'
+	tsvReader.LazyQuotes = true
 
 	columns, err := tsvReader.Read()
 	if err != nil {
