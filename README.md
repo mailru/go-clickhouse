@@ -210,4 +210,4 @@ make init # dep ensure and install
 make test
 ```
 
-_Remember that `init` will add a few binaries used for testing (like `golint`) into your GOPATH_
+_Remember that `make init` will add a few binaries used for testing (like `golint` and it's dependencies) into your GOPATH_
