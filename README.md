@@ -165,3 +165,6 @@ func main() {
 	}
 }
 ```
+
+## Go versions
+Officially support last 3 golang releases
