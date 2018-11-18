@@ -202,7 +202,7 @@ func main() {
 Officially support last 3 golang releases
 
 
-## Development:
+## Development
 You can check the effect of changes on Travis CI or run tests locally:
 
 ``` bash
