@@ -86,7 +86,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	stmt, err := tx.Prepare("INSERT INTO example (country_code, os_id, browser_id, categories, action_day, action_time) VALUES (?, ?, ?, ?, ?, ?)")
+	stmt, err := tx.Prepare(`
+		INSERT INTO example (
+			country_code,
+			os_id,
+			browser_id,
+			categories,
+			action_day,
+			action_time
+		) VALUES (
+			?, ?, ?, ?, ?, ?
+		)`)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +119,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rows, err := connect.Query("SELECT country_code, os_id, browser_id, categories, action_day, action_time FROM example")
+	rows, err := connect.Query(`
+		SELECT 
+			country_code,
+			os_id,
+			browser_id,
+			categories,
+			action_day,
+			action_time
+		FROM
+			example`)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,10 +141,19 @@ func main() {
 			categories            []int16
 			actionDay, actionTime time.Time
 		)
-		if err := rows.Scan(&country, &os, &browser, &categories, &actionDay, &actionTime); err != nil {
+		if err := rows.Scan(
+			&country,
+			&os,
+			&browser,
+			&categories,
+			&actionDay,
+			&actionTime,
+		); err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("country: %s, os: %d, browser: %d, categories: %v, action_day: %s, action_time: %s", country, os, browser, categories, actionDay, actionTime)
+		log.Printf("country: %s, os: %d, browser: %d, categories: %v, action_day: %s, action_time: %s",
+			country, os, browser, categories, actionDay, actionTime,
+		)
 	}
 }
 ```
@@ -161,10 +191,23 @@ func main() {
 	}
 
 	for _, item := range items {
-		log.Printf("country: %s, os: %d, browser: %d, categories: %v, action_time: %s", item.CountryCode, item.OsID, item.BrowserID, item.Categories, item.ActionTime)
+		log.Printf("country: %s, os: %d, browser: %d, categories: %v, action_time: %s",
+			item.CountryCode, item.OsID, item.BrowserID, item.Categories, item.ActionTime,
+		)
 	}
 }
 ```
 
 ## Go versions
 Officially support last 3 golang releases
+
+
+## Development
+You can check the effect of changes on Travis CI or run tests locally:
+
+``` bash
+make init # dep ensure and install
+make test
+```
+
+_Remember that `make init` will add a few binaries used for testing (like `golint` and it's dependencies) into your GOPATH_
