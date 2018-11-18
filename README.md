@@ -54,7 +54,7 @@ import (
 	"database/sql"
 	"log"
 	"time"
-	
+
 	"github.com/mailru/go-clickhouse"
 )
 

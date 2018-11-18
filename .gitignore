@@ -2,3 +2,4 @@
 _vendor/
 vendor/
 coverage.out
+Gopkg.lock
