@@ -42,7 +42,7 @@ func formatDate(value time.Time) string {
 
 func readResponse(response *http.Response) (result []byte, err error) {
 	if response.ContentLength > 0 {
-		result = make([]byte, response.ContentLength)
+		result = make([]byte, 0, response.ContentLength)
 	}
 	buf := bytes.NewBuffer(result)
 	defer response.Body.Close()
