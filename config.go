@@ -110,8 +110,7 @@ func ParseDSN(dsn string) (*Config, error) {
 	}
 	cfg := NewConfig()
 
-	cfg.Scheme = u.Scheme
-	cfg.Host = u.Host
+	cfg.Scheme, cfg.Host = u.Scheme, u.Host
 	if len(u.Path) > 1 {
 		// skip '/'
 		cfg.Database = u.Path[1:]
