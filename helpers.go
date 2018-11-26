@@ -42,7 +42,7 @@ func formatDate(value time.Time) string {
 
 func readResponse(response *http.Response) (result []byte, err error) {
 	if response.ContentLength > 0 {
-		result = make([]byte, response.ContentLength)
+		result = make([]byte, 0, response.ContentLength)
 	}
 	buf := bytes.NewBuffer(result)
 	defer response.Body.Close()
@@ -52,7 +52,7 @@ func readResponse(response *http.Response) (result []byte, err error) {
 }
 
 func numOfColumns(data []byte) int {
-	cnt := 0
+	var cnt int
 	for _, ch := range data {
 		switch ch {
 		case '\t':
@@ -66,8 +66,7 @@ func numOfColumns(data []byte) int {
 
 // splitTSV splits one row of tab separated values, returns begin of next row
 func splitTSV(data []byte, out []string) int {
-	i := 0
-	k := 0
+	var i, k int
 	for j, ch := range data {
 		switch ch {
 		case '\t':
