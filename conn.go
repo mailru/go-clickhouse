@@ -183,7 +183,10 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	if err != nil {
 		return nil, err
 	}
-	_, err = c.doRequest(ctx, req)
+	body, err := c.doRequest(ctx, req)
+	if err == nil {
+		body.Close()
+	}
 	return emptyResult, err
 }
 
@@ -205,6 +208,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 	}
 	if resp.StatusCode != 200 {
 		msg, err := readResponse(resp)
+		resp.Body.Close()
 		c.cancel = nil
 		if err == nil {
 			err = newError(string(msg))
