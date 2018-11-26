@@ -221,18 +221,6 @@ func (s *stmtSuite) TestFixDoubleInterpolateInStmt() {
 	s.NoError(rows.Close())
 }
 
-func (s *stmtSuite) TestFixMultiLineInsert() {
-	q := `
-INSERT INTO tbl (
-a
-) VALUES (
-?
-)
-`
-	st := newStmt(q)
-	s.True(st.batchMode)
-}
-
 func TestStmt(t *testing.T) {
 	suite.Run(t, new(stmtSuite))
 }
