@@ -10,7 +10,7 @@ import (
 
 var (
 	escaper   = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
-	unescaper = strings.NewReplacer(`\\`, `\`, `\'`, `'`, `\n`, "\n")
+	unescaper = strings.NewReplacer(`\\`, `\`, `\'`, `'`, `\n`, "\n", `\t`, "\t", `\r`, "\r")
 )
 
 func escape(s string) string {
