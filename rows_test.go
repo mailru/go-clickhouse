@@ -23,7 +23,7 @@ func (r *bufReadCloser) Close() error {
 func TestTextRows(t *testing.T) {
 	buf := bytes.NewReader([]byte("Number\tText\nInt32\tString\n1\thello\n2\tworld\n"))
 	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
-	if !assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		return
 	}
 	assert.Equal(t, []string{"Number", "Text"}, rows.Columns())
@@ -34,16 +34,16 @@ func TestTextRows(t *testing.T) {
 	assert.Equal(t, "String", rows.ColumnTypeDatabaseTypeName(1))
 
 	dest := make([]driver.Value, 2)
-	if !assert.NoError(t, rows.Next(dest)) {
+	if assert.Nil(t, rows.Next(dest)) {
 		return
 	}
 	assert.Equal(t, []driver.Value{int32(1), "hello"}, dest)
-	if !assert.NoError(t, rows.Next(dest)) {
+	if assert.Nil(t, rows.Next(dest)) {
 		return
 	}
 	assert.Equal(t, []driver.Value{int32(2), "world"}, dest)
 	data, err := ioutil.ReadAll(rows.respBody)
-	if !assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		return
 	}
 
