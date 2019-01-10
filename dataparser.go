@@ -7,6 +7,7 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -432,6 +433,9 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		}
 		return &tupleParser{subParsers}, nil
 	default:
+		if strings.Contains(t.Name, "Decimal") {
+			return &stringParser{unquote: unquote}, nil
+		}
 		return nil, fmt.Errorf("type %s is not supported", t.Name)
 	}
 }
