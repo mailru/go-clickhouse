@@ -46,6 +46,7 @@ func (s *connSuite) TestColumnTypes() {
 	expected := []string{
 		"Int64", "UInt64", "Float64", "String", "String", "Array(Int16)", "Array(UInt8)", "Date", "DateTime",
 		"Enum8('one' = 1, 'two' = 2, 'three' = 3)",
+		"Decimal(9, 4)", "Decimal(18, 4)", "Decimal(38, 4)", "Decimal(10, 4)",
 	}
 	s.Require().Equal(len(expected), len(types))
 	for i, e := range expected {

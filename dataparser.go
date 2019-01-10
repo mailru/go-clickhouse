@@ -7,7 +7,6 @@ import (
 	"io"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -399,7 +398,7 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		return &floatParser{32}, nil
 	case "Float64":
 		return &floatParser{64}, nil
-	case "String", "Enum8", "Enum16":
+	case "Decimal", "String", "Enum8", "Enum16":
 		return &stringParser{unquote: unquote}, nil
 	case "FixedString":
 		if len(t.Args) != 1 {
@@ -433,9 +432,6 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		}
 		return &tupleParser{subParsers}, nil
 	default:
-		if strings.Contains(t.Name, "Decimal") {
-			return &stringParser{unquote: unquote}, nil
-		}
 		return nil, fmt.Errorf("type %s is not supported", t.Name)
 	}
 }
