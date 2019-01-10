@@ -40,11 +40,15 @@ func (s *stmtSuite) TestQuery() {
 
 	for _, tc := range testCases {
 		st, err := s.conn.Prepare(tc.query)
-		s.Require().NoError(err)
+		if !s.NoError(err) {
+			continue
+		}
 		for i, args := range tc.args {
 			expected := tc.expected[i]
 			rows, err := st.Query(args...)
-			s.Require().NoError(err)
+			if !s.NoError(err) {
+				continue
+			}
 			if len(expected) == 0 {
 				s.False(rows.Next())
 				s.NoError(rows.Err())
@@ -82,13 +86,19 @@ func (s *stmtSuite) TestExec() {
 
 	for _, tc := range testCases {
 		st, err := s.conn.Prepare(tc.query)
-		s.Require().NoError(err)
+		if !s.NoError(err) {
+			continue
+		}
 		for _, args := range tc.args {
 			result, err := st.Exec(args...)
-			s.Require().NoError(err)
+			if !s.NoError(err) {
+				continue
+			}
 			s.NotNil(result)
 			rows, err := s.conn.Query(tc.query2, args...)
-			s.Require().NoError(err)
+			if !s.NoError(err) {
+				continue
+			}
 			v, err := scanValues(rows, args)
 			if s.NoError(err) {
 				s.Equal([][]interface{}{args}, v)

@@ -21,7 +21,9 @@ func (s *connSuite) TestExecBuild19() {
 	}
 	for _, tc := range testCases {
 		result, err := s.conn.Exec(tc.query, tc.args...)
-		s.Require().NoError(err)
+		if !s.NoError(err) {
+			continue
+		}
 		s.NotNil(result)
 		_, err = result.LastInsertId()
 		s.Equal(ErrNoLastInsertID, err)
@@ -31,7 +33,9 @@ func (s *connSuite) TestExecBuild19() {
 			continue
 		}
 		rows, err := s.conn.Query(tc.query2, tc.args...)
-		s.Require().NoError(err)
+		if !s.NoError(err) {
+			continue
+		}
 		v, err := scanValues(rows, tc.args)
 		if s.NoError(err) {
 			s.Equal([][]interface{}{tc.args}, v)
