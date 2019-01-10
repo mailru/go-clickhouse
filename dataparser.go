@@ -10,6 +10,22 @@ import (
 	"time"
 )
 
+var (
+	reflectTypeString      = reflect.TypeOf("")
+	reflectTypeTime        = reflect.TypeOf(time.Time{})
+	reflectTypeEmptyStruct = reflect.TypeOf(struct{}{})
+	reflectTypeInt8        = reflect.TypeOf(int8(0))
+	reflectTypeInt16       = reflect.TypeOf(int16(0))
+	reflectTypeInt32       = reflect.TypeOf(int32(0))
+	reflectTypeInt64       = reflect.TypeOf(int64(0))
+	reflectTypeUInt8       = reflect.TypeOf(uint8(0))
+	reflectTypeUInt16      = reflect.TypeOf(uint16(0))
+	reflectTypeUInt32      = reflect.TypeOf(uint32(0))
+	reflectTypeUInt64      = reflect.TypeOf(uint64(0))
+	reflectTypeFloat32     = reflect.TypeOf(float32(0))
+	reflectTypeFloat64     = reflect.TypeOf(float64(0))
+)
+
 // DataParser implements parsing of a driver value and reporting its type.
 type DataParser interface {
 	Parse(io.RuneScanner) (driver.Value, error)
@@ -107,7 +123,7 @@ func (p *stringParser) Parse(s io.RuneScanner) (driver.Value, error) {
 }
 
 func (p *stringParser) Type() reflect.Type {
-	return reflect.ValueOf("").Type()
+	return reflectTypeString
 }
 
 func (p *dateTimeParser) Parse(s io.RuneScanner) (driver.Value, error) {
@@ -124,7 +140,7 @@ func (p *dateTimeParser) Parse(s io.RuneScanner) (driver.Value, error) {
 }
 
 func (p *dateTimeParser) Type() reflect.Type {
-	return reflect.ValueOf(time.Time{}).Type()
+	return reflectTypeTime
 }
 
 type arrayParser struct {
@@ -276,26 +292,26 @@ func (p *intParser) Type() reflect.Type {
 	if p.signed {
 		switch p.bitSize {
 		case 8:
-			return reflect.ValueOf(int8(0)).Type()
+			return reflectTypeInt8
 		case 16:
-			return reflect.ValueOf(int16(0)).Type()
+			return reflectTypeInt16
 		case 32:
-			return reflect.ValueOf(int32(0)).Type()
+			return reflectTypeInt32
 		case 64:
-			return reflect.ValueOf(int64(0)).Type()
+			return reflectTypeInt64
 		default:
 			panic("unsupported bit size")
 		}
 	} else {
 		switch p.bitSize {
 		case 8:
-			return reflect.ValueOf(uint8(0)).Type()
+			return reflectTypeUInt8
 		case 16:
-			return reflect.ValueOf(uint16(0)).Type()
+			return reflectTypeUInt16
 		case 32:
-			return reflect.ValueOf(uint32(0)).Type()
+			return reflectTypeUInt32
 		case 64:
-			return reflect.ValueOf(uint64(0)).Type()
+			return reflectTypeUInt64
 		default:
 			panic("unsupported bit size")
 		}
@@ -322,9 +338,9 @@ func (p *floatParser) Parse(s io.RuneScanner) (driver.Value, error) {
 func (p *floatParser) Type() reflect.Type {
 	switch p.bitSize {
 	case 32:
-		return reflect.ValueOf(float32(0)).Type()
+		return reflectTypeFloat32
 	case 64:
-		return reflect.ValueOf(float64(0)).Type()
+		return reflectTypeFloat64
 	default:
 		panic("unsupported bit size")
 	}
@@ -337,7 +353,7 @@ func (p *nothingParser) Parse(s io.RuneScanner) (driver.Value, error) {
 }
 
 func (p *nothingParser) Type() reflect.Type {
-	return reflect.ValueOf(struct{}{}).Type()
+	return reflectTypeEmptyStruct
 }
 
 // NewDataParser creates a new DataParser based on the
@@ -354,14 +370,14 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		return nil, fmt.Errorf("Nullable types are not supported")
 	case "Date":
 		// FIXME: support custom default/override location
-		return newDateTimeParser("2006-01-02", "UTC", unquote)
+		return newDateTimeParser(dateFormat, "UTC", unquote)
 	case "DateTime":
 		// FIXME: support custom default/override location
 		locname := "UTC"
 		if len(t.Args) > 0 {
 			locname = t.Args[0].Name
 		}
-		return newDateTimeParser("2006-01-02 15:04:05", locname, unquote)
+		return newDateTimeParser(timeFormat, locname, unquote)
 	case "UInt8":
 		return &intParser{false, 8}, nil
 	case "UInt16":
