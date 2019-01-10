@@ -1,7 +1,6 @@
 package clickhouse
 
 import (
-	"compress/gzip"
 	"context"
 	"database/sql"
 	"database/sql/driver"
@@ -184,7 +183,10 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	if err != nil {
 		return nil, err
 	}
-	_, err = c.doRequest(ctx, req)
+	body, err := c.doRequest(ctx, req)
+	if body != nil {
+		body.Close()
+	}
 	return emptyResult, err
 }
 
@@ -213,15 +215,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		return nil, err
 	}
 
-	respBody := resp.Body
-	if resp.Header.Get("Content-Encoding") == "gzip" {
-		respBody, err = gzip.NewReader(respBody)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return respBody, nil
+	return resp.Body, nil
 }
 
 func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) (*http.Request, error) {
@@ -245,9 +239,6 @@ func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) 
 	if err == nil && c.user != nil {
 		p, _ := c.user.Password()
 		req.SetBasicAuth(c.user.Username(), p)
-	}
-	if c.useGzipCompression {
-		req.Header.Set("Accept-Encoding", "gzip")
 	}
 
 	return req, err

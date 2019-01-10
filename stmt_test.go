@@ -113,25 +113,52 @@ func (s *stmtSuite) TestExec() {
 }
 
 func (s *stmtSuite) TestExecMulti() {
-	require := s.Require()
-	tx, err := s.conn.Begin()
-	require.NoError(err)
-	st, err := tx.Prepare("INSERT INTO data (i64) VALUES (?)")
-	require.NoError(err)
-	st.Exec(21)
-	st.Exec(22)
-	rows, err := s.conn.Query("SELECT i64 FROM data WHERE i64=21")
-	s.False(rows.Next())
-	s.NoError(rows.Close())
-	require.NoError(tx.Commit())
-	s.NoError(st.Close())
-	rows, err = s.conn.Query("SELECT i64 FROM data WHERE i64>20")
-	require.NoError(err)
-	expected := [][]interface{}{{int64(21)}, {int64(22)}}
-	v, err := scanValues(rows, expected[0])
-	s.NoError(rows.Close())
-	require.NoError(err)
-	s.Equal(expected, v)
+	testCases := []struct {
+		insertQuery string
+		exec1       int64
+		exec2       int64
+		query1      string
+		query2      string
+		expected    [][]interface{}
+	}{
+		{
+			"INSERT INTO data (i64) VALUES (?)",
+			21,
+			22,
+			"SELECT i64 FROM data WHERE i64=21",
+			"SELECT i64 FROM data WHERE i64>20",
+			[][]interface{}{{int64(21)}, {int64(22)}},
+		},
+		{
+			"INSERT\nINTO\ndata\n(\ni64\n)\nVALUES\n(\n?\n)",
+			23,
+			24,
+			"SELECT i64 FROM data WHERE i64=23",
+			"SELECT i64 FROM data WHERE i64>22",
+			[][]interface{}{{int64(23)}, {int64(24)}},
+		},
+	}
+
+	for _, tc := range testCases {
+		require := s.Require()
+		tx, err := s.conn.Begin()
+		require.NoError(err)
+		st, err := tx.Prepare(tc.insertQuery)
+		require.NoError(err)
+		st.Exec(tc.exec1)
+		st.Exec(tc.exec2)
+		rows, err := s.conn.Query(tc.query1)
+		s.False(rows.Next())
+		s.NoError(rows.Close())
+		require.NoError(tx.Commit())
+		s.NoError(st.Close())
+		rows, err = s.conn.Query(tc.query2)
+		require.NoError(err)
+		v, err := scanValues(rows, tc.expected[0])
+		s.NoError(rows.Close())
+		require.NoError(err)
+		s.Equal(tc.expected, v)
+	}
 }
 
 func (s *stmtSuite) TestExecMultiRollback() {
