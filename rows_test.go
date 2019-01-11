@@ -21,7 +21,7 @@ func (r *bufReadCloser) Close() error {
 }
 
 func TestTextRows(t *testing.T) {
-	buf := bytes.NewReader([]byte("Number\tText\nInt32\tString\n1\t'hello'\n2\t'world'\n"))
+	buf := bytes.NewReader([]byte("Number\tText\nInt32\tString\n1\thello\n2\tworld\n"))
 	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
 	if !assert.NoError(t, err) {
 		return
@@ -33,7 +33,6 @@ func TestTextRows(t *testing.T) {
 	assert.Equal(t, "Int32", rows.ColumnTypeDatabaseTypeName(0))
 	assert.Equal(t, "String", rows.ColumnTypeDatabaseTypeName(1))
 
-	assert.Equal(t, time.Local, rows.decode.(*textDecoder).location)
 	dest := make([]driver.Value, 2)
 	if !assert.NoError(t, rows.Next(dest)) {
 		return
