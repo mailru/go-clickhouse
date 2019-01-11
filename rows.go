@@ -3,8 +3,10 @@ package clickhouse
 import (
 	"database/sql/driver"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -22,6 +24,25 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 	if err != nil {
 		return nil, err
 	}
+	for i := range types {
+		types[i], err = readUnquoted(strings.NewReader(types[i]), 0)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	parsers := make([]DataParser, len(types), len(types))
+	for i, typ := range types {
+		desc, err := ParseTypeDesc(typ)
+		if err != nil {
+			return nil, err
+		}
+
+		parsers[i], err = NewDataParser(desc)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &textRows{
 		c:        c,
@@ -29,7 +50,7 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 		tsv:      tsvReader,
 		columns:  columns,
 		types:    types,
-		decode:   &textDecoder{location: location, useDBLocation: useDBLocation},
+		parsers:  parsers,
 	}, nil
 }
 
@@ -39,7 +60,7 @@ type textRows struct {
 	tsv      *csv.Reader
 	columns  []string
 	types    []string
-	decode   decoder
+	parsers  []DataParser
 }
 
 func (r *textRows) Columns() []string {
@@ -58,9 +79,13 @@ func (r *textRows) Next(dest []driver.Value) error {
 	}
 
 	for i, s := range row {
-		v, err := r.decode.Decode(r.types[i], []byte(s))
+		reader := strings.NewReader(s)
+		v, err := r.parsers[i].Parse(reader)
 		if err != nil {
 			return err
+		}
+		if _, _, err := reader.ReadRune(); err != io.EOF {
+			return fmt.Errorf("trailing data after parsing the value")
 		}
 		dest[i] = v
 	}
@@ -70,7 +95,7 @@ func (r *textRows) Next(dest []driver.Value) error {
 
 // ColumnTypeScanType implements the driver.RowsColumnTypeScanType
 func (r *textRows) ColumnTypeScanType(index int) reflect.Type {
-	return columnType(r.types[index])
+	return r.parsers[index].Type()
 }
 
 // ColumnTypeDatabaseTypeName implements the driver.RowsColumnTypeDatabaseTypeName
