@@ -399,7 +399,7 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		return &floatParser{32}, nil
 	case "Float64":
 		return &floatParser{64}, nil
-	case "String", "Enum8", "Enum16":
+	case "String", "Enum8", "Enum16", "UUID":
 		return &stringParser{unquote: unquote}, nil
 	case "FixedString":
 		if len(t.Args) != 1 {
