@@ -69,6 +69,12 @@ func TestParseData(t *testing.T) {
 			output:    float32(math.Inf(-1)),
 		},
 		{
+			name:      "decimal",
+			inputtype: "Decimal(9,4)",
+			inputdata: "123",
+			output:    "123",
+		},
+		{
 			name:      "date",
 			inputtype: "Date",
 			inputdata: "2018-01-02",

@@ -31,11 +31,15 @@ func (s *connSuite) TestQuery() {
 		{"SELECT i64 AS num FROM data WHERE i64<?", []interface{}{-3}, [][]interface{}{}},
 		{"SELECT i64 AS num FROM data WHERE i64=?", []interface{}{nil}, [][]interface{}{}},
 		{"SELECT i64 AS num FROM data WHERE i64=?", []interface{}{-1}, [][]interface{}{{int64(-1)}}},
+		{"SELECT d32 AS num FROM data WHERE d32=?", []interface{}{Decimal32(10, 4)}, [][]interface{}{{"10.0000"}}},
+		{"SELECT d64 AS num FROM data WHERE d64=?", []interface{}{Decimal32(100, 4)}, [][]interface{}{{"100.0000"}}},
+		{"SELECT d128 AS num FROM data WHERE d128=?", []interface{}{Decimal32(1000, 4)}, [][]interface{}{{"1000.0000"}}},
 		{
 			"SELECT * FROM data WHERE u64=?",
 			[]interface{}{1},
 			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", "1", []int16{1}, []uint8{10},
-				parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one"}},
+				parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one",
+				"10.0000", "100.0000", "1000.0000", "1.0000"}},
 		},
 		{
 			"SELECT i64, count() FROM data WHERE i64<0 GROUP BY i64 WITH TOTALS ORDER BY i64",
@@ -101,6 +105,12 @@ func (s *connSuite) TestExec() {
 			"SELECT u64 FROM data WHERE u64=?",
 			[]interface{}{UInt64(maxAllowedUInt64*2 + 1)},
 		},
+		{
+			"INSERT INTO data (d32, d64, d128) VALUES(?, ?, ?)",
+			"",
+			[]interface{}{Decimal32(50, 4), Decimal64(500, 4), Decimal128(5000, 4)},
+		},
+
 		{
 			"INSERT INTO data (d, t) VALUES (?, ?)",
 			"",

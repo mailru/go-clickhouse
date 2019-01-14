@@ -54,6 +54,14 @@ func TestParseTypeDesc(t *testing.T) {
 			},
 		},
 		{
+			name:  "decimal",
+			input: "Decimal(9,4)",
+			output: &TypeDesc{
+				Name: "Decimal",
+				Args: []*TypeDesc{{Name: "9"}, {Name: "4"}},
+			},
+		},
+		{
 			name:  "quoted escaped arg",
 			input: `DateTime('UTC\b\r\n\'\f\t\0')`,
 			output: &TypeDesc{
