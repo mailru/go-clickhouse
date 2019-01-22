@@ -60,6 +60,22 @@ func readEscaped(s io.RuneScanner) (rune, error) {
 	}
 }
 
+func readRaw(s io.RuneScanner) *bytes.Buffer {
+	var data bytes.Buffer
+
+	for {
+		r := read(s)
+
+		if r == eof {
+			break
+		}
+
+		data.WriteRune(r)
+	}
+
+	return &data
+}
+
 func readQuoted(s io.RuneScanner) (*token, error) {
 	var data bytes.Buffer
 

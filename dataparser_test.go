@@ -27,10 +27,16 @@ func TestParseData(t *testing.T) {
 
 	testCases := []*testCase{
 		{
-			name:          "nullable not supported",
-			inputtype:     "Nullable(String)",
-			inputdata:     "NULL",
-			failNewParser: true,
+			name:      "nullable string",
+			inputtype: "Nullable(String)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable int not null",
+			inputtype: "Nullable(UInt64)",
+			inputdata: "655",
+			output:    uint64(655),
 		},
 		{
 			name:      "string",

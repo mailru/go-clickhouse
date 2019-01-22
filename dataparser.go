@@ -43,6 +43,23 @@ type dateTimeParser struct {
 	location *time.Location
 }
 
+type nullableParser struct {
+	DataParser
+}
+
+func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
+	// Clickhouse returns `\N` string for `null` in tsv format.
+	// For checking this value we need to check first two runes in `io.RuneScanner`, but we can't reset `io.RuneScanner` after it.
+	// Copy io.RuneScanner to `bytes.Buffer` and use it twice (1st for casting to string and checking to null, 2nd for passing to original parser)
+	d := readRaw(s)
+
+	if bytes.Equal(d.Bytes(), []byte(`\N`)) {
+		return nil, nil
+	}
+
+	return p.DataParser.Parse(d)
+}
+
 func readNumber(s io.RuneScanner) (string, error) {
 	var builder bytes.Buffer
 
@@ -367,7 +384,14 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 	case "Nothing":
 		return &nothingParser{}, nil
 	case "Nullable":
-		return nil, fmt.Errorf("Nullable types are not supported")
+		if len(t.Args) == 0 {
+			return nil, fmt.Errorf("Nullable should pass original type")
+		}
+		p, err := newDataParser(t.Args[0], unquote)
+		if err != nil {
+			return nil, err
+		}
+		return &nullableParser{p}, nil
 	case "Date":
 		// FIXME: support custom default/override location
 		return newDateTimeParser(dateFormat, "UTC", unquote)
