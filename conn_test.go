@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"net/http"
@@ -175,7 +176,7 @@ func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 	cfg.User = "user"
 	cfg.Password = "password"
 	cn := newConn(cfg)
-	req, err := cn.buildRequest("SELECT 1", nil, true)
+	req, err := cn.buildRequest(context.Background(), "SELECT 1", nil, true)
 	if s.NoError(err) {
 		user, password, ok := req.BasicAuth()
 		s.True(ok)
@@ -189,7 +190,7 @@ func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 
 func (s *connSuite) TestBuildRequestReadWriteWOAuth() {
 	cn := newConn(NewConfig())
-	req, err := cn.buildRequest("INSERT 1 INTO num", nil, false)
+	req, err := cn.buildRequest(context.Background(), "INSERT 1 INTO num", nil, false)
 	if s.NoError(err) {
 		_, _, ok := req.BasicAuth()
 		s.False(ok)
@@ -198,6 +199,141 @@ func (s *connSuite) TestBuildRequestReadWriteWOAuth() {
 	}
 }
 
+func (s *connSuite) TestBuildRequestWithQueryId() {
+	cn := newConn(NewConfig())
+	testCases := []struct {
+		queryID  string
+		expected string
+	}{
+		{
+			"",
+			cn.url.String(),
+		},
+		{
+			"query-id",
+			cn.url.String() + "&query_id=query-id",
+		},
+		{
+			"query id",
+			cn.url.String() + "&query_id=query+id",
+		},
+		{
+			" ",
+			cn.url.String() + "&query_id=+",
+		},
+		{
+			"_",
+			cn.url.String() + "&query_id=_",
+		},
+		{
+			"^",
+			cn.url.String() + "&query_id=%5E",
+		},
+		{
+			"213&query=select 1",
+			cn.url.String() + "&query_id=213%26query%3Dselect+1",
+		},
+	}
+	for _, tc := range testCases {
+		req, err := cn.buildRequest(context.WithValue(context.Background(), QueryID, tc.queryID), "INSERT 1 INTO num", nil, false)
+		if s.NoError(err) {
+			s.Equal(http.MethodPost, req.Method)
+			s.Equal(tc.expected, req.URL.String())
+		}
+	}
+}
+func (s *connSuite) TestBuildRequestWithQuotaKey() {
+	cn := newConn(NewConfig())
+	testCases := []struct {
+		quotaKey string
+		expected string
+	}{
+		{
+			"",
+			cn.url.String() + "&quota_key=",
+		},
+		{
+			"quota-key",
+			cn.url.String() + "&quota_key=quota-key",
+		},
+		{
+			"quota key",
+			cn.url.String() + "&quota_key=quota+key",
+		},
+		{
+			" ",
+			cn.url.String() + "&quota_key=+",
+		},
+		{
+			"_",
+			cn.url.String() + "&quota_key=_",
+		},
+		{
+			"^",
+			cn.url.String() + "&quota_key=%5E",
+		},
+		{
+			"213&query=select 1",
+			cn.url.String() + "&quota_key=213%26query%3Dselect+1",
+		},
+	}
+	for _, tc := range testCases {
+		req, err := cn.buildRequest(context.WithValue(context.Background(), QuotaKey, tc.quotaKey), "SELECT 1", nil, false)
+		if s.NoError(err) {
+			s.Equal(http.MethodPost, req.Method)
+			s.Equal(tc.expected, req.URL.String())
+		}
+	}
+}
+func (s *connSuite) TestBuildRequestWithQueryIdAndQuotaKey() {
+	cn := newConn(NewConfig())
+	testCases := []struct {
+		quotaKey string
+		queryID  string
+		expected string
+	}{
+		{
+			"",
+			"",
+			cn.url.String() + "&quota_key=",
+		},
+		{
+			"quota-key",
+			"query-id",
+			cn.url.String() + "&query_id=query-id&quota_key=quota-key",
+		},
+		{
+			"quota key",
+			"query id",
+			cn.url.String() + "&query_id=query+id&quota_key=quota+key",
+		},
+		{
+			" ",
+			" ",
+			cn.url.String() + "&query_id=+&quota_key=+",
+		},
+		{
+			"_",
+			"_",
+			cn.url.String() + "&query_id=_&quota_key=_",
+		},
+		{
+			"^",
+			"&query",
+			cn.url.String() + "&query_id=%26query&quota_key=%5E",
+		},
+	}
+	for _, tc := range testCases {
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, QuotaKey, tc.quotaKey)
+		ctx = context.WithValue(ctx, QueryID, tc.queryID)
+		req, err := cn.buildRequest(ctx, "SELECT 1", nil, false)
+		if s.NoError(err) {
+			s.Equal(http.MethodPost, req.Method)
+			s.Equal(tc.expected, req.URL.String())
+		}
+	}
+}
 func TestConn(t *testing.T) {
 	suite.Run(t, new(connSuite))
 }
