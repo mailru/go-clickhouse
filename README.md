@@ -44,6 +44,23 @@ type `[]byte` are used as raw string (without quoting)
 for passing value of type `[]uint8` to driver as array - please use the wrapper `clickhouse.Array`
 for passing decimal value please use the wrappers `clickhouse.Decimal*`
 
+## Supported request params
+
+Clickhouse supports setting
+[query_id](https://clickhouse.yandex/docs/en/interfaces/http/) and
+[quota_key](https://clickhouse.yandex/docs/en/operations/quotas/) for each
+query. The database driver provides ability to set these parameters as well.
+
+There are constants `QueryID` and `QuotaKey` for correct setting these params.
+
+`quota_key` could be set as empty string, but `query_id` - does not. Keep in
+mind, that setting same `query_id` could produce exception or replace already
+running query depending on current Clickhouse settings. See
+[replace_running_query](https://clickhouse.yandex/docs/en/operations/settings/settings/#replace-running-query)
+for details.
+
+See `Example` section for use cases.
+
 ## Install
 ```
 go get -u github.com/mailru/go-clickhouse
@@ -54,6 +71,7 @@ go get -u github.com/mailru/go-clickhouse
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"time"
@@ -124,6 +142,44 @@ func main() {
 
 	rows, err := connect.Query(`
 		SELECT 
+			country_code,
+			os_id,
+			browser_id,
+			categories,
+			action_day,
+			action_time
+		FROM
+			example`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for rows.Next() {
+		var (
+			country               string
+			os, browser           uint8
+			categories            []int16
+			actionDay, actionTime time.Time
+		)
+		if err := rows.Scan(
+			&country,
+			&os,
+			&browser,
+			&categories,
+			&actionDay,
+			&actionTime,
+		); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("country: %s, os: %d, browser: %d, categories: %v, action_day: %s, action_time: %s",
+			country, os, browser, categories, actionDay, actionTime,
+		)
+	}
+
+	ctx := context.Background()
+	rows, err := connect.QueryContext(context.WithValue(ctx, clickhouse.QueryID, "dummy-query-id"), `
+		SELECT
 			country_code,
 			os_id,
 			browser_id,
