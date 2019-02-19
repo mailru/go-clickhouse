@@ -93,6 +93,12 @@ func TestParseData(t *testing.T) {
 			output:    "hello",
 		},
 		{
+			name:      "uuid",
+			inputtype: "UUID",
+			inputdata: "c79a9747-7cef-4b11-8177-380f7ed462a4",
+			output:    "c79a9747-7cef-4b11-8177-380f7ed462a4",
+		},
+		{
 			name:      "datetime",
 			inputtype: "DateTime",
 			inputdata: "2018-01-02 12:34:56",
