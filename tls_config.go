@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// Based on the original implementation in go-sql-driver/mysql:
+// Based on the original implementation in the project go-sql-driver/mysql:
 // https://github.com/go-sql-driver/mysql/blob/master/utils.go
 
 var (
