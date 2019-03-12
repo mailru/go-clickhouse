@@ -61,6 +61,7 @@ func newConn(cfg *Config) *conn {
 			MaxIdleConns:          1,
 			IdleConnTimeout:       cfg.IdleTimeout,
 			ResponseHeaderTimeout: cfg.ReadTimeout,
+			TLSClientConfig:       getTLSConfigClone(cfg.TLSConfig),
 		},
 		logger: logger,
 	}
