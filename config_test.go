@@ -9,7 +9,7 @@ import (
 
 func TestParseDSN(t *testing.T) {
 	dsn := "http://username:password@localhost:8123/test?timeout=1s&idle_timeout=2s&read_timeout=3s" +
-		"&write_timeout=4s&location=Local&max_execution_time=10&debug=1"
+		"&write_timeout=4s&location=Local&max_execution_time=10&debug=1&priority=10"
 	cfg, err := ParseDSN(dsn)
 	if assert.NoError(t, err) {
 		assert.Equal(t, "username", cfg.User)
@@ -23,7 +23,8 @@ func TestParseDSN(t *testing.T) {
 		assert.Equal(t, 4*time.Second, cfg.WriteTimeout)
 		assert.Equal(t, time.Local, cfg.Location)
 		assert.True(t, cfg.Debug)
-		assert.Equal(t, map[string]string{"max_execution_time": "10"}, cfg.Params)
+		assert.Equal(t, map[string]string{"max_execution_time": "10", "priority": "10"}, cfg.Params)
+		assert.Equal(t, 10, cfg.Priority)
 	}
 }
 
@@ -60,7 +61,7 @@ func TestParseWrongDSN(t *testing.T) {
 
 func TestFormatDSN(t *testing.T) {
 	dsn := "http://username:password@localhost:8123/test?timeout=1s&idle_timeout=2s&read_timeout=3s" +
-		"&write_timeout=4s&location=Europe%2FMoscow&max_execution_time=10&debug=1"
+		"&write_timeout=4s&location=Europe%2FMoscow&max_execution_time=10&debug=1&priority=10"
 	cfg, err := ParseDSN(dsn)
 	if assert.NoError(t, err) {
 		dsn2 := cfg.FormatDSN()
@@ -73,20 +74,24 @@ func TestFormatDSN(t *testing.T) {
 		assert.Contains(t, dsn2, "location=Europe%2FMoscow")
 		assert.Contains(t, dsn2, "max_execution_time=10")
 		assert.Contains(t, dsn2, "debug=1")
+		assert.Contains(t, dsn2, "priority=10")
 	}
 }
 
 func TestConfigURL(t *testing.T) {
 	dsn := "http://username:password@localhost:8123/test?timeout=1s&idle_timeout=2s&read_timeout=3s" +
-		"&write_timeout=4s&location=Local&max_execution_time=10"
+		"&write_timeout=4s&location=Local&max_execution_time=10&priority=10"
 	cfg, err := ParseDSN(dsn)
 	if assert.NoError(t, err) {
 		u1 := cfg.url(nil, true).String()
-		assert.Equal(t, "http://username:password@localhost:8123/test?max_execution_time=10", u1)
+		assert.Contains(t, u1, "http://username:password@localhost:8123/test?")
+		assert.Contains(t, u1, "max_execution_time=10")
+		assert.Contains(t, u1, "priority=10")
 		u2 := cfg.url(map[string]string{"default_format": "Native"}, false).String()
 		assert.Contains(t, u2, "http://username:password@localhost:8123/?")
 		assert.Contains(t, u2, "default_format=Native")
 		assert.Contains(t, u2, "database=test")
+		assert.Contains(t, u2, "priority=10")
 	}
 }
 

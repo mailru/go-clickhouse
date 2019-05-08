@@ -25,6 +25,7 @@ type Config struct {
 	GzipCompression bool
 	Params          map[string]string
 	TLSConfig       string
+	Priority        int
 }
 
 // NewConfig creates a new config with default values
@@ -60,6 +61,9 @@ func (cfg *Config) FormatDSN() string {
 	}
 	if cfg.GzipCompression {
 		query.Set("enable_http_compression", "1")
+	}
+	if cfg.Priority != 0 {
+		query.Set("priority", strconv.Itoa(cfg.Priority))
 	}
 	if cfg.Debug {
 		query.Set("debug", "1")
@@ -157,6 +161,9 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 			cfg.Params[k] = v[0]
 		case "tls_config":
 			cfg.TLSConfig = v[0]
+		case "priority":
+			cfg.Priority, err = strconv.Atoi(v[0])
+			cfg.Params[k] = v[0]
 		default:
 			cfg.Params[k] = v[0]
 		}
