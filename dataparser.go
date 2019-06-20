@@ -230,6 +230,18 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	return slice.Interface(), nil
 }
 
+type lowCardinalityParser struct {
+	arg DataParser
+}
+
+func (p *lowCardinalityParser) Type() reflect.Type {
+	return p.arg.Type()
+}
+
+func (p *lowCardinalityParser) Parse(s io.RuneScanner) (driver.Value, error) {
+	return p.arg.Parse(s)
+}
+
 func newDateTimeParser(format, locname string, unquote bool) (DataParser, error) {
 	loc, err := time.LoadLocation(locname)
 	if err != nil {
@@ -431,6 +443,15 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 			subParsers[i] = subParser
 		}
 		return &tupleParser{subParsers}, nil
+	case "LowCardinality":
+		if len(t.Args) != 1 {
+			return nil, fmt.Errorf("element type not specified for LowCardinality")
+		}
+		subParser, err := newDataParser(t.Args[0], unquote)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create parser for LowCardinality elements: %v", err)
+		}
+		return &lowCardinalityParser{subParser}, nil
 	default:
 		return nil, fmt.Errorf("type %s is not supported", t.Name)
 	}
