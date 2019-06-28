@@ -253,6 +253,30 @@ func TestParseData(t *testing.T) {
 			inputdata:     "(1,2",
 			failParseData: true,
 		},
+		{
+			name:      "low cardinality string",
+			inputtype: "LowCardinality(String)",
+			inputdata: "hello",
+			output:    "hello",
+		},
+		{
+			name:      "low cardinality string with escaping",
+			inputtype: "LowCardinality(String)",
+			inputdata: `hello \'world`,
+			output:    "hello 'world",
+		},
+		{
+			name:          "low cardinality string with incorrect escaping",
+			inputtype:     "LowCardinality(String)",
+			inputdata:     `hello world\`,
+			failParseData: true,
+		},
+		{
+			name:      "low cardinality UInt64",
+			inputtype: "LowCardinality(UInt64)",
+			inputdata: "123",
+			output:    uint64(123),
+		},
 	}
 
 	for _, tc := range testCases {

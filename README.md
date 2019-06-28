@@ -34,6 +34,7 @@ http://user:password@host:8123/clicks?read_timeout=10&write_timeout=20
 * Date
 * DateTime
 * Enum
+* LowCardinality(T)
 * [Array(T) (one-dimensional)](https://clickhouse.yandex/reference_en.html#Array(T))
 * [Nested(Name1 Type1, Name2 Type2, ...)](https://clickhouse.yandex/docs/en/data_types/nested_data_structures/nested/)
 
