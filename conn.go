@@ -227,7 +227,6 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		}
 		return nil, err
 	}
-
 	return resp.Body, nil
 }
 
@@ -247,7 +246,13 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		method = http.MethodPost
 	}
 	c.log("query: ", query)
-	req, err := http.NewRequest(method, c.url.String(), strings.NewReader(query))
+
+	var bodyReader io.Reader
+	if method == http.MethodPost {
+		bodyReader = strings.NewReader(query)
+	}
+
+	req, err := http.NewRequest(method, c.url.String(), bodyReader)
 	// http.Transport ignores url.User argument, handle it here
 	if err == nil && c.user != nil {
 		p, _ := c.user.Password()
@@ -266,6 +271,11 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 			}
 			req.URL.RawQuery = reqQuery.Encode()
 		}
+	}
+	if method == http.MethodGet {
+		reqQuery := req.URL.Query()
+		reqQuery.Add("query", query)
+		req.URL.RawQuery = reqQuery.Encode()
 	}
 	return req, err
 }

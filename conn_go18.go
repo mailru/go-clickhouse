@@ -5,10 +5,6 @@ package clickhouse
 import (
 	"context"
 	"database/sql/driver"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 // Ping implements the driver.Pinger
@@ -16,21 +12,20 @@ func (c *conn) Ping(ctx context.Context) error {
 	if c.transport == nil {
 		return driver.ErrBadConn
 	}
-	// make request with empty body, response should be "Ok"
-	u := &url.URL{Scheme: c.url.Scheme, User: c.url.User, Host: c.url.Host, Path: "/"}
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+
+	req, err := c.buildRequest(ctx, "select version()", nil, true)
 	if err != nil {
 		return err
 	}
-	respBody, err := c.doRequest(ctx, req)
+	_, err = c.doRequest(ctx, req)
 	defer func() {
 		c.cancel = nil
 	}()
 	if err != nil {
 		return driver.ErrBadConn
 	}
-	resp, err := ioutil.ReadAll(respBody)
-	if err != nil || len(resp) != 4 || !strings.HasPrefix(string(resp), "Ok.") {
+
+	if err != nil {
 		return driver.ErrBadConn
 	}
 	return nil
