@@ -13,6 +13,7 @@ func TestParseData(t *testing.T) {
 	type testCase struct {
 		name          string
 		inputtype     string
+		inputopt      *DataParserOptions
 		inputdata     string
 		output        interface{}
 		failParseDesc bool
@@ -22,7 +23,11 @@ func TestParseData(t *testing.T) {
 
 	losAngeles, err := time.LoadLocation("America/Los_Angeles")
 	if err != nil {
-		t.Fatalf("failed to load time zone: %v", err)
+		t.Fatalf("failed to load time zone America/Los_Angeles: %v", err)
+	}
+	moscow, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		t.Fatalf("failed to load time zone Europe/Moscow: %v", err)
 	}
 
 	testCases := []*testCase{
@@ -93,22 +98,74 @@ func TestParseData(t *testing.T) {
 			output:    time.Time{},
 		},
 		{
+			name:      "with special timezone",
+			inputtype: "Date",
+			inputdata: "2019-06-29",
+			inputopt: &DataParserOptions{
+				Location: losAngeles,
+			},
+			output: time.Date(2019, 6, 29, 0, 0, 0, 0, losAngeles),
+		},
+		{
 			name:      "enum",
 			inputtype: "Enum8('hello' = 1, 'world' = 2)",
 			inputdata: "hello",
 			output:    "hello",
 		},
 		{
-			name:      "datetime",
+			name:      "uuid",
+			inputtype: "UUID",
+			inputdata: "c79a9747-7cef-4b11-8177-380f7ed462a4",
+			output:    "c79a9747-7cef-4b11-8177-380f7ed462a4",
+		},
+		{
+			name:      "datetime, without options and argument",
 			inputtype: "DateTime",
 			inputdata: "2018-01-02 12:34:56",
 			output:    time.Date(2018, 1, 2, 12, 34, 56, 0, time.UTC),
 		},
 		{
-			name:      "datetime in Los Angeles",
+			name:      "datetime, with argument",
 			inputtype: "DateTime('America/Los_Angeles')",
 			inputdata: "2018-01-02 12:34:56",
 			output:    time.Date(2018, 1, 2, 12, 34, 56, 0, losAngeles),
+		},
+		{
+			name:      "datetime with argument, but location nil",
+			inputtype: "DateTime('America/Los_Angeles')",
+			inputdata: "2018-01-02 12:34:56",
+			inputopt: &DataParserOptions{
+				Location: nil,
+			},
+			output: time.Date(2018, 1, 2, 12, 34, 56, 0, losAngeles),
+		},
+		{
+			name:      "datetime without argument, but use location",
+			inputtype: "DateTime",
+			inputdata: "2018-01-02 12:34:56",
+			inputopt: &DataParserOptions{
+				Location: moscow,
+			},
+			output: time.Date(2018, 1, 2, 12, 34, 56, 0, moscow),
+		},
+		{
+			name:      "datetime with argument and location, ingnore argument",
+			inputtype: "DateTime('America/Los_Angeles')",
+			inputdata: "2018-01-02 12:34:56",
+			inputopt: &DataParserOptions{
+				Location: moscow,
+			},
+			output: time.Date(2018, 1, 2, 12, 34, 56, 0, moscow),
+		},
+		{
+			name:      "datetime with argument and location, prefer argument",
+			inputtype: "DateTime('America/Los_Angeles')",
+			inputdata: "2018-01-02 12:34:56",
+			inputopt: &DataParserOptions{
+				Location:      moscow,
+				UseDBLocation: true,
+			},
+			output: time.Date(2018, 1, 2, 12, 34, 56, 0, losAngeles),
 		},
 		{
 			name:          "datetime in nowhere",
@@ -253,6 +310,30 @@ func TestParseData(t *testing.T) {
 			inputdata:     "(1,2",
 			failParseData: true,
 		},
+		{
+			name:      "low cardinality string",
+			inputtype: "LowCardinality(String)",
+			inputdata: "hello",
+			output:    "hello",
+		},
+		{
+			name:      "low cardinality string with escaping",
+			inputtype: "LowCardinality(String)",
+			inputdata: `hello \'world`,
+			output:    "hello 'world",
+		},
+		{
+			name:          "low cardinality string with incorrect escaping",
+			inputtype:     "LowCardinality(String)",
+			inputdata:     `hello world\`,
+			failParseData: true,
+		},
+		{
+			name:      "low cardinality UInt64",
+			inputtype: "LowCardinality(UInt64)",
+			inputdata: "123",
+			output:    uint64(123),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -266,7 +347,7 @@ func TestParseData(t *testing.T) {
 				return
 			}
 
-			parser, err := newDataParser(desc, false)
+			parser, err := newDataParser(desc, false, tc.inputopt)
 			if tc.failNewParser {
 				assert.Error(tt, err)
 				return

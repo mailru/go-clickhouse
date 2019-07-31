@@ -24,6 +24,7 @@ type Config struct {
 	UseDBLocation   bool
 	GzipCompression bool
 	Params          map[string]string
+	TLSConfig       string
 }
 
 // NewConfig creates a new config with default values
@@ -154,6 +155,8 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 		case "enable_http_compression":
 			cfg.GzipCompression, err = strconv.ParseBool(v[0])
 			cfg.Params[k] = v[0]
+		case "tls_config":
+			cfg.TLSConfig = v[0]
 		default:
 			cfg.Params[k] = v[0]
 		}
