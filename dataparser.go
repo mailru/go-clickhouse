@@ -404,7 +404,7 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		if len(t.Args) == 0 {
 			return nil, fmt.Errorf("Nullable should pass original type")
 		}
-		p, err := newDataParser(t.Args[0], unquote)
+		p, err := newDataParser(t.Args[0], unquote, opt)
 		if err != nil {
 			return nil, err
 		}
