@@ -14,9 +14,9 @@ import (
 // Ping implements the driver.Pinger
 func (c *conn) Ping(ctx context.Context) error {
 	if c.transport == nil {
-		return driver.ErrBadConn
+		return ErrTransportNil
 	}
-	// make request with empty body, response should be "Ok"
+	// make request with empty body, response must be "Ok"
 	u := &url.URL{Scheme: c.url.Scheme, User: c.url.User, Host: c.url.Host, Path: "/"}
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -27,11 +27,14 @@ func (c *conn) Ping(ctx context.Context) error {
 		c.cancel = nil
 	}()
 	if err != nil {
-		return driver.ErrBadConn
+		return err
 	}
 	resp, err := ioutil.ReadAll(respBody)
-	if err != nil || len(resp) != 4 || !strings.HasPrefix(string(resp), "Ok.") {
-		return driver.ErrBadConn
+	if err != nil {
+		return err
+	}
+	if len(resp) != 4 || !strings.HasPrefix(string(resp), "Ok.") {
+		return ErrIncorrectResponse
 	}
 	return nil
 }
