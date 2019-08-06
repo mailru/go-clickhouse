@@ -43,6 +43,23 @@ type dateTimeParser struct {
 	location *time.Location
 }
 
+type nullableParser struct {
+	DataParser
+}
+
+func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
+	// Clickhouse returns `\N` string for `null` in tsv format.
+	// For checking this value we need to check first two runes in `io.RuneScanner`, but we can't reset `io.RuneScanner` after it.
+	// Copy io.RuneScanner to `bytes.Buffer` and use it twice (1st for casting to string and checking to null, 2nd for passing to original parser)
+	d := readRaw(s)
+
+	if bytes.Equal(d.Bytes(), []byte(`\N`)) {
+		return nil, nil
+	}
+
+	return p.DataParser.Parse(d)
+}
+
 func readNumber(s io.RuneScanner) (string, error) {
 	var builder bytes.Buffer
 
@@ -230,11 +247,19 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	return slice.Interface(), nil
 }
 
-func newDateTimeParser(format, locname string, unquote bool) (DataParser, error) {
-	loc, err := time.LoadLocation(locname)
-	if err != nil {
-		return nil, err
-	}
+type lowCardinalityParser struct {
+	arg DataParser
+}
+
+func (p *lowCardinalityParser) Type() reflect.Type {
+	return p.arg.Type()
+}
+
+func (p *lowCardinalityParser) Parse(s io.RuneScanner) (driver.Value, error) {
+	return p.arg.Parse(s)
+}
+
+func newDateTimeParser(format string, loc *time.Location, unquote bool) (DataParser, error) {
 	return &dateTimeParser{
 		unquote:  unquote,
 		format:   format,
@@ -356,28 +381,52 @@ func (p *nothingParser) Type() reflect.Type {
 	return reflectTypeEmptyStruct
 }
 
-// NewDataParser creates a new DataParser based on the
-// given TypeDesc.
-func NewDataParser(t *TypeDesc) (DataParser, error) {
-	return newDataParser(t, false)
+// DataParserOptions describes DataParser options.
+// Ex.: Fields Location and UseDBLocation specify timezone options.
+type DataParserOptions struct {
+	// Location describes default location for DateTime and Date field without Timezone argument.
+	Location *time.Location
+	// UseDBLocation if false: always use Location, ignore DateTime argument.
+	UseDBLocation bool
 }
 
-func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
+// NewDataParser creates a new DataParser based on the
+// given TypeDesc.
+func NewDataParser(t *TypeDesc, opt *DataParserOptions) (DataParser, error) {
+	return newDataParser(t, false, opt)
+}
+
+func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParser, error) {
 	switch t.Name {
 	case "Nothing":
 		return &nothingParser{}, nil
 	case "Nullable":
-		return nil, fmt.Errorf("Nullable types are not supported")
-	case "Date":
-		// FIXME: support custom default/override location
-		return newDateTimeParser(dateFormat, "UTC", unquote)
-	case "DateTime":
-		// FIXME: support custom default/override location
-		locname := "UTC"
-		if len(t.Args) > 0 {
-			locname = t.Args[0].Name
+		if len(t.Args) == 0 {
+			return nil, fmt.Errorf("Nullable should pass original type")
 		}
-		return newDateTimeParser(timeFormat, locname, unquote)
+		p, err := newDataParser(t.Args[0], unquote, opt)
+		if err != nil {
+			return nil, err
+		}
+		return &nullableParser{p}, nil
+	case "Date":
+		loc := time.UTC
+		if opt != nil && opt.Location != nil {
+			loc = opt.Location
+		}
+		return newDateTimeParser(dateFormat, loc, unquote)
+	case "DateTime":
+		loc := time.UTC
+		if (opt == nil || opt.Location == nil || opt.UseDBLocation) && len(t.Args) > 0 {
+			var err error
+			loc, err = time.LoadLocation(t.Args[0].Name)
+			if err != nil {
+				return nil, err
+			}
+		} else if opt != nil && opt.Location != nil {
+			loc = opt.Location
+		}
+		return newDateTimeParser(timeFormat, loc, unquote)
 	case "UInt8":
 		return &intParser{false, 8}, nil
 	case "UInt16":
@@ -398,7 +447,7 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		return &floatParser{32}, nil
 	case "Float64":
 		return &floatParser{64}, nil
-	case "Decimal", "String", "Enum8", "Enum16":
+	case "Decimal", "String", "Enum8", "Enum16", "UUID":
 		return &stringParser{unquote: unquote}, nil
 	case "FixedString":
 		if len(t.Args) != 1 {
@@ -413,7 +462,7 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		if len(t.Args) != 1 {
 			return nil, fmt.Errorf("element type not specified for Array")
 		}
-		subParser, err := newDataParser(t.Args[0], true)
+		subParser, err := newDataParser(t.Args[0], true, opt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create parser for array elements: %v", err)
 		}
@@ -424,13 +473,22 @@ func newDataParser(t *TypeDesc, unquote bool) (DataParser, error) {
 		}
 		subParsers := make([]DataParser, len(t.Args), len(t.Args))
 		for i, arg := range t.Args {
-			subParser, err := newDataParser(arg, true)
+			subParser, err := newDataParser(arg, true, opt)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create parser for tuple element: %v", err)
 			}
 			subParsers[i] = subParser
 		}
 		return &tupleParser{subParsers}, nil
+	case "LowCardinality":
+		if len(t.Args) != 1 {
+			return nil, fmt.Errorf("element type not specified for LowCardinality")
+		}
+		subParser, err := newDataParser(t.Args[0], unquote, opt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create parser for LowCardinality elements: %v", err)
+		}
+		return &lowCardinalityParser{subParser}, nil
 	default:
 		return nil, fmt.Errorf("type %s is not supported", t.Name)
 	}

@@ -15,6 +15,18 @@ import (
 	"time"
 )
 
+type key int
+
+const (
+	// QueryID uses for setting query_id request param for request to Clickhouse
+	QueryID key = iota
+	// QuotaKey uses for setting quota_key request param for request to Clickhouse
+	QuotaKey
+
+	quotaKeyParamName = "quota_key"
+	queryIDParamName  = "query_id"
+)
+
 // conn implements an interface sql.Conn
 type conn struct {
 	url                *url.URL
@@ -49,6 +61,7 @@ func newConn(cfg *Config) *conn {
 			MaxIdleConns:          1,
 			IdleConnTimeout:       cfg.IdleTimeout,
 			ResponseHeaderTimeout: cfg.ReadTimeout,
+			TLSClientConfig:       getTLSConfigClone(cfg.TLSConfig),
 		},
 		logger: logger,
 	}
@@ -163,7 +176,7 @@ func (c *conn) query(ctx context.Context, query string, args []driver.Value) (dr
 	if atomic.LoadInt32(&c.closed) != 0 {
 		return nil, driver.ErrBadConn
 	}
-	req, err := c.buildRequest(query, args, true)
+	req, err := c.buildRequest(ctx, query, args, true)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +192,7 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	if atomic.LoadInt32(&c.closed) != 0 {
 		return nil, driver.ErrBadConn
 	}
-	req, err := c.buildRequest(query, args, false)
+	req, err := c.buildRequest(ctx, query, args, false)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +231,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 	return resp.Body, nil
 }
 
-func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) (*http.Request, error) {
+func (c *conn) buildRequest(ctx context.Context, query string, params []driver.Value, readonly bool) (*http.Request, error) {
 	var (
 		method string
 		err    error
@@ -240,7 +253,20 @@ func (c *conn) buildRequest(query string, params []driver.Value, readonly bool) 
 		p, _ := c.user.Password()
 		req.SetBasicAuth(c.user.Username(), p)
 	}
-
+	if ctx != nil {
+		quotaKey, quotaOk := ctx.Value(QuotaKey).(string)
+		queryID, queryOk := ctx.Value(QueryID).(string)
+		if quotaOk || queryOk {
+			reqQuery := req.URL.Query()
+			if quotaOk {
+				reqQuery.Add(quotaKeyParamName, quotaKey)
+			}
+			if queryOk && len(queryID) > 0 {
+				reqQuery.Add(queryIDParamName, queryID)
+			}
+			req.URL.RawQuery = reqQuery.Encode()
+		}
+	}
 	return req, err
 }
 

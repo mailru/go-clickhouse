@@ -38,7 +38,10 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 			return nil, err
 		}
 
-		parsers[i], err = NewDataParser(desc)
+		parsers[i], err = NewDataParser(desc, &DataParserOptions{
+			Location:      location,
+			UseDBLocation: useDBLocation,
+		})
 		if err != nil {
 			return nil, err
 		}
