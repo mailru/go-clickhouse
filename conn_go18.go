@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"io/ioutil"
+	"strings"
 )
 
 // Ping implements the driver.Pinger
@@ -29,7 +30,7 @@ func (c *conn) Ping(ctx context.Context) error {
 	}
 
 	resp, err := ioutil.ReadAll(respBody)
-	if err != nil || string(resp) != "1" {
+	if err != nil || !strings.HasPrefix(string(resp), "1") {
 		return driver.ErrBadConn
 	}
 	return nil

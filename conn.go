@@ -277,10 +277,10 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		}
 		reqQuery.Add("query", query)
 	}
-
 	if reqQuery != nil {
 		req.URL.RawQuery = reqQuery.Encode()
 	}
+
 	return req, err
 }
 
