@@ -240,17 +240,15 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 			return nil, err
 		}
 	}
+
+	var bodyReader io.Reader
 	if readonly {
 		method = http.MethodGet
 	} else {
 		method = http.MethodPost
-	}
-	c.log("query: ", query)
-
-	var bodyReader io.Reader
-	if method == http.MethodPost {
 		bodyReader = strings.NewReader(query)
 	}
+	c.log("query: ", query)
 
 	req, err := http.NewRequest(method, c.url.String(), bodyReader)
 	// http.Transport ignores url.User argument, handle it here
@@ -258,23 +256,29 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		p, _ := c.user.Password()
 		req.SetBasicAuth(c.user.Username(), p)
 	}
+
+	var reqQuery url.Values
 	if ctx != nil {
 		quotaKey, quotaOk := ctx.Value(QuotaKey).(string)
 		queryID, queryOk := ctx.Value(QueryID).(string)
 		if quotaOk || queryOk {
-			reqQuery := req.URL.Query()
+			reqQuery = req.URL.Query()
 			if quotaOk {
 				reqQuery.Add(quotaKeyParamName, quotaKey)
 			}
 			if queryOk && len(queryID) > 0 {
 				reqQuery.Add(queryIDParamName, queryID)
 			}
-			req.URL.RawQuery = reqQuery.Encode()
 		}
 	}
 	if method == http.MethodGet {
-		reqQuery := req.URL.Query()
+		if reqQuery == nil {
+			reqQuery = req.URL.Query()
+		}
 		reqQuery.Add("query", query)
+	}
+
+	if reqQuery != nil {
 		req.URL.RawQuery = reqQuery.Encode()
 	}
 	return req, err

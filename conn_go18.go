@@ -5,6 +5,7 @@ package clickhouse
 import (
 	"context"
 	"database/sql/driver"
+	"io/ioutil"
 )
 
 // Ping implements the driver.Pinger
@@ -13,19 +14,22 @@ func (c *conn) Ping(ctx context.Context) error {
 		return driver.ErrBadConn
 	}
 
-	req, err := c.buildRequest(ctx, "select version()", nil, true)
+	req, err := c.buildRequest(ctx, "select 1", nil, true)
 	if err != nil {
 		return err
 	}
-	_, err = c.doRequest(ctx, req)
+
+	respBody, err := c.doRequest(ctx, req)
 	defer func() {
 		c.cancel = nil
 	}()
 	if err != nil {
+		respBody.Close()
 		return driver.ErrBadConn
 	}
 
-	if err != nil {
+	resp, err := ioutil.ReadAll(respBody)
+	if err != nil || string(resp) != "1" {
 		return driver.ErrBadConn
 	}
 	return nil
