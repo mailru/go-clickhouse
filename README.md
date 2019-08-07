@@ -142,7 +142,7 @@ func main() {
 	}
 
 	rows, err := connect.Query(`
-		SELECT 
+		SELECT
 			country_code,
 			os_id,
 			browser_id,
