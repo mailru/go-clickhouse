@@ -1,5 +1,5 @@
 # for tests
-required = ["github.com/golang/lint/golint"]
+required = ["golang.org/x/lint"]
 
 [[override]]
   name = "golang.org/x/tools"
