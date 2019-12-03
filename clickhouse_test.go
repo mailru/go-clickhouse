@@ -51,6 +51,7 @@ type chSuite struct {
 	suite.Suite
 	conn                *sql.DB
 	connWithCompression *sql.DB
+	connWithKillQuery   *sql.DB
 }
 
 func (s *chSuite) SetupSuite() {
@@ -67,6 +68,10 @@ func (s *chSuite) SetupSuite() {
 	connWithCompression, err := sql.Open("clickhouse", dsn+"?enable_http_compression=1")
 	s.Require().NoError(err)
 	s.connWithCompression = connWithCompression
+
+	connWithKillQuery, err := sql.Open("clickhouse", dsn+"?kill_query=1&read_timeout=1s")
+	s.Require().NoError(err)
+	s.connWithKillQuery = connWithKillQuery
 }
 
 func (s *chSuite) TearDownSuite() {
@@ -76,6 +81,10 @@ func (s *chSuite) TearDownSuite() {
 
 	s.connWithCompression.Close()
 	_, err = s.connWithCompression.Query("SELECT 1")
+	s.EqualError(err, "sql: database is closed")
+
+	s.connWithKillQuery.Close()
+	_, err = s.connWithKillQuery.Query("SELECT 1")
 	s.EqualError(err, "sql: database is closed")
 }
 
