@@ -36,6 +36,8 @@ var (
 	errEmptyQueryID = errors.New("query id is empty")
 )
 
+var defaultKillQueryTimeout = time.Duration(time.Second)
+
 // conn implements an interface sql.Conn
 type conn struct {
 	url                *url.URL
@@ -50,6 +52,7 @@ type conn struct {
 	logger             *log.Logger
 	closed             int32
 	killQueryOnErr     bool
+	killQueryTimeout   time.Duration
 }
 
 func newConn(cfg *Config) *conn {
@@ -63,6 +66,7 @@ func newConn(cfg *Config) *conn {
 		useDBLocation:      cfg.UseDBLocation,
 		useGzipCompression: cfg.GzipCompression,
 		killQueryOnErr:     cfg.KillQueryOnErr,
+		killQueryTimeout:   cfg.KillQueryTimeout,
 		transport: &http.Transport{
 			DialContext: (&net.Dialer{
 				Timeout:   cfg.Timeout,
@@ -192,7 +196,11 @@ func (c *conn) killQuery(req *http.Request, args []driver.Value) error {
 		return errEmptyQueryID
 	}
 	query := fmt.Sprintf("KILL QUERY WHERE query_id='%s'", queryID)
-	ctx, cancelFunc := context.WithTimeout(context.Background(), c.transport.ResponseHeaderTimeout)
+	timeout := c.killQueryTimeout
+	if timeout == 0 {
+		timeout = defaultKillQueryTimeout
+	}
+	ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 	defer cancelFunc()
 	req, err := c.buildRequest(ctx, query, args, false)
 	if err != nil {
