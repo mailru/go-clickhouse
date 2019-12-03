@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -73,6 +75,9 @@ func (s *connSuite) TestQuery() {
 
 	// Tests on connections with enabled compression
 	doTests(s.connWithCompression)
+
+	// Tests on connection with enabled kill connection
+	doTests(s.connWithKillQuery)
 }
 
 func (s *connSuite) TestExec() {
@@ -171,6 +176,25 @@ func (s *connSuite) TestServerError() {
 	s.Contains(srvErr.Error(), "Code: 62, Message: Syntax error:")
 }
 
+func (s *connSuite) TestServerKillQuery() {
+	queryID := uuid.NewV4().String()
+	ctx := context.WithValue(context.Background(), queryIDParamName, queryID)
+	_, err := s.connWithKillQuery.QueryContext(ctx, "SELECT sleep(2)")
+	s.Error(err)
+	s.Contains(err.Error(), "net/http: timeout awaiting response headers")
+	rows := s.connWithKillQuery.QueryRow(fmt.Sprintf("SELECT count(query_id) FROM system.processes where query_id='%s'", queryID))
+	var amount int
+	err = rows.Scan(&amount)
+	s.NoError(err)
+	s.Equal(0, amount)
+
+	_, err = s.connWithKillQuery.QueryContext(ctx, "SELECT sleep(0.5)")
+	s.NoError(err)
+
+	_, err = s.conn.QueryContext(ctx, "SELECT sleep(2)")
+	s.NoError(err)
+}
+
 func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 	cfg := NewConfig()
 	cfg.User = "user"
@@ -250,7 +274,7 @@ func (s *connSuite) TestBuildRequestWithQuotaKey() {
 	}{
 		{
 			"",
-			cn.url.String() + "&quota_key=",
+			cn.url.String(),
 		},
 		{
 			"quota-key",
@@ -295,7 +319,7 @@ func (s *connSuite) TestBuildRequestWithQueryIdAndQuotaKey() {
 		{
 			"",
 			"",
-			cn.url.String() + "&quota_key=",
+			cn.url.String(),
 		},
 		{
 			"quota-key",
