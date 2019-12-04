@@ -10,22 +10,23 @@ import (
 
 // Config is a configuration parsed from a DSN string
 type Config struct {
-	User            string
-	Password        string
-	Scheme          string
-	Host            string
-	Database        string
-	Timeout         time.Duration
-	IdleTimeout     time.Duration
-	ReadTimeout     time.Duration
-	WriteTimeout    time.Duration
-	Location        *time.Location
-	Debug           bool
-	UseDBLocation   bool
-	GzipCompression bool
-	Params          map[string]string
-	TLSConfig       string
-	KillQueryOnErr  bool // kill query on the server side if we have error from transport
+	User             string
+	Password         string
+	Scheme           string
+	Host             string
+	Database         string
+	Timeout          time.Duration
+	IdleTimeout      time.Duration
+	ReadTimeout      time.Duration
+	WriteTimeout     time.Duration
+	Location         *time.Location
+	Debug            bool
+	UseDBLocation    bool
+	GzipCompression  bool
+	Params           map[string]string
+	TLSConfig        string
+	KillQueryOnErr   bool // kill query on the server side if we have error from transport
+	KillQueryTimeout time.Duration
 }
 
 // NewConfig creates a new config with default values
@@ -67,6 +68,9 @@ func (cfg *Config) FormatDSN() string {
 	}
 	if cfg.KillQueryOnErr {
 		query.Set("kill_query", "1")
+	}
+	if cfg.KillQueryTimeout != 0 {
+		query.Set("kill_query_timeout", cfg.KillQueryTimeout.String())
 	}
 
 	u.RawQuery = query.Encode()
@@ -163,6 +167,8 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 			cfg.TLSConfig = v[0]
 		case "kill_query":
 			cfg.KillQueryOnErr, err = strconv.ParseBool(v[0])
+		case "kill_query_timeout":
+			cfg.KillQueryTimeout, err = time.ParseDuration(v[0])
 		default:
 			cfg.Params[k] = v[0]
 		}
