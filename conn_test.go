@@ -178,8 +178,7 @@ func (s *connSuite) TestServerError() {
 
 func (s *connSuite) TestServerKillQuery() {
 	queryID := uuid.NewV4().String()
-	ctx := context.WithValue(context.Background(), queryIDParamName, queryID)
-	_, err := s.connWithKillQuery.QueryContext(ctx, "SELECT sleep(2)")
+	_, err := s.connWithKillQuery.QueryContext(context.Background(), "SELECT sleep(2)")
 	s.Error(err)
 	s.Contains(err.Error(), "net/http: timeout awaiting response headers")
 	rows := s.connWithKillQuery.QueryRow(fmt.Sprintf("SELECT count(query_id) FROM system.processes where query_id='%s'", queryID))
@@ -188,10 +187,10 @@ func (s *connSuite) TestServerKillQuery() {
 	s.NoError(err)
 	s.Equal(0, amount)
 
-	_, err = s.connWithKillQuery.QueryContext(ctx, "SELECT sleep(0.5)")
+	_, err = s.connWithKillQuery.QueryContext(context.Background(), "SELECT sleep(0.5)")
 	s.NoError(err)
 
-	_, err = s.conn.QueryContext(ctx, "SELECT sleep(2)")
+	_, err = s.conn.QueryContext(context.Background(), "SELECT sleep(2)")
 	s.NoError(err)
 }
 
