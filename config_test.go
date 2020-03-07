@@ -102,7 +102,7 @@ func TestDefaultPort(t *testing.T) {
 		out string
 	}{
 		{"http://localhost/test", "http://localhost:8123/test"},
-		{"http://de:ad:be:ef::ca:fe/test", "http://[de:ad:be:ef::ca:fe]:8123/test"},
+		{"http://[de:ad:be:ef::ca:fe]/test", "http://[de:ad:be:ef::ca:fe]:8123/test"},
 	}
 	var (
 		cfg *Config
