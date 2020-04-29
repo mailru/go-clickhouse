@@ -10,8 +10,8 @@ required = ["golang.org/x/lint"]
   version = "1.2.2"
 
 [[constraint]]
-  name = "github.com/satori/go.uuid"
-  version = "1.1.0"
+  name = "github.com/gofrs/uuid"
+  version = "3.2.0"
 
 [prune]
   go-tests = true
