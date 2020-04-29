@@ -190,10 +190,10 @@ func (s *connSuite) TestServerKillQuery() {
 	s.NoError(err)
 	s.Equal(0, amount)
 
-	_, err = s.connWithKillQuery.QueryContext(ctx, "SELECT sleep(0.5)")
+	_, err = s.connWithKillQuery.QueryContext(context.Background(), "SELECT sleep(0.5)")
 	s.NoError(err)
 
-	_, err = s.conn.QueryContext(ctx, "SELECT sleep(2)")
+	_, err = s.conn.QueryContext(context.Background(), "SELECT sleep(2)")
 	s.NoError(err)
 }
 
