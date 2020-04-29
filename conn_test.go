@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -177,21 +176,29 @@ func (s *connSuite) TestServerError() {
 }
 
 func (s *connSuite) TestServerKillQuery() {
+	// kill query and check if it is cancelled
 	queryUUID, err := uuid.NewV4()
 	s.Require().NoError(err)
 	queryID := queryUUID.String()
-	ctx := context.WithValue(context.Background(), queryIDParamName, queryID)
-	_, err = s.connWithKillQuery.QueryContext(ctx, "SELECT sleep(2)")
+	_, err = s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(3)")
 	s.Error(err)
 	s.Contains(err.Error(), "net/http: timeout awaiting response headers")
-	rows := s.connWithKillQuery.QueryRow(fmt.Sprintf("SELECT count(query_id) FROM system.processes where query_id='%s'", queryID))
+	rows := s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 1)
 	var amount int
 	err = rows.Scan(&amount)
 	s.NoError(err)
-	s.Equal(0, amount)
+	s.Equal(1, amount)
 
-	_, err = s.connWithKillQuery.QueryContext(context.Background(), "SELECT sleep(0.5)")
+	// not kill query and check if it is not cancelled
+	queryUUID, err = uuid.NewV4()
+	s.Require().NoError(err)
+	queryID = queryUUID.String()
+	_, err = s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(0.5)")
 	s.NoError(err)
+	rows = s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 0)
+	err = rows.Scan(&amount)
+	s.NoError(err)
+	s.Equal(0, amount)
 
 	_, err = s.conn.QueryContext(context.Background(), "SELECT sleep(2)")
 	s.NoError(err)
