@@ -1,7 +1,7 @@
 module github.com/mailru/go-clickhouse
 
 require (
-	github.com/satori/go.uuid v1.1.0
+	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/stretchr/testify v1.3.0
 )
 

@@ -16,7 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 )
 
 type key int
@@ -313,7 +313,12 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 	}
 
 	if c.killQueryOnErr && queryID == "" {
-		queryID = uuid.NewV4().String()
+		queryUUID, err := uuid.NewV4()
+		if err != nil {
+			c.log("can't generate query_id: ", err)
+		} else {
+			queryID = queryUUID.String()
+		}
 	}
 
 	reqQuery := req.URL.Query()
