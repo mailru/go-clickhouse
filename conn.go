@@ -286,7 +286,7 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		method string
 		err    error
 	)
-	if params != nil {
+	if params != nil && len(params) > 0 {
 		if query, err = interpolateParams(query, params); err != nil {
 			return nil, err
 		}
