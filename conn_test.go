@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
@@ -367,6 +368,18 @@ func (s *connSuite) TestBuildRequestWithQueryIdAndQuotaKey() {
 		}
 	}
 }
+func (s *connSuite) TestBuildRequestParamsInterpolation() {
+	query := `INSERT INTO test (str) VALUES ("Question?")`
+	cn := newConn(NewConfig())
+	req, err := cn.buildRequest(context.Background(), query, make([]driver.Value, 0), false)
+	if s.NoError(err) {
+		body, e := ioutil.ReadAll(req.Body)
+		if s.NoError(e) {
+			s.Equal(query, string(body))
+		}
+	}
+}
+
 func TestConn(t *testing.T) {
 	suite.Run(t, new(connSuite))
 }
