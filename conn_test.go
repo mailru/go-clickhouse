@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -217,7 +218,7 @@ func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 		s.Equal("user", user)
 		s.Equal("password", password)
 		s.Equal(http.MethodGet, req.Method)
-		s.Equal(cn.url.String(), req.URL.String())
+		s.Equal(cn.url.String()+"&query="+url.QueryEscape("SELECT 1"), req.URL.String())
 		s.Nil(req.URL.User)
 	}
 }
