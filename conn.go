@@ -247,10 +247,15 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 		return nil, err
 	}
 	body, err := c.doRequest(ctx, req)
-	if body != nil {
-		body.Close()
+	if err != nil {
+		if body != nil {
+			body.Close()
+		}
+
+		return emptyResult, err
 	}
-	return emptyResult, err
+
+	return emptyResult, noticeError(body)
 }
 
 func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser, error) {

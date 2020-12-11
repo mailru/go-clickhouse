@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -11,6 +12,8 @@ var (
 	escaper    = strings.NewReplacer(`\`, `\\`, `'`, `\'`)
 	dateFormat = "2006-01-02"
 	timeFormat = "2006-01-02 15:04:05"
+
+	exceptionMarker = "DB::Exception"
 )
 
 func escape(s string) string {
@@ -38,6 +41,22 @@ func readResponse(response *http.Response) (result []byte, err error) {
 	_, err = buf.ReadFrom(response.Body)
 	result = buf.Bytes()
 	return
+}
+
+func noticeError(body io.ReadCloser) (err error) {
+	if body == nil {
+		return nil
+	}
+
+	buf := new(bytes.Buffer)
+	defer body.Close()
+	_, err = buf.ReadFrom(body)
+	msg := buf.String()
+	if strings.Contains(msg, exceptionMarker) {
+		return newError(msg)
+	}
+
+	return nil
 }
 
 func numOfColumns(data []byte) int {
