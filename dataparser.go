@@ -51,13 +51,69 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	// Clickhouse returns `\N` string for `null` in tsv format.
 	// For checking this value we need to check first two runes in `io.RuneScanner`, but we can't reset `io.RuneScanner` after it.
 	// Copy io.RuneScanner to `bytes.Buffer` and use it twice (1st for casting to string and checking to null, 2nd for passing to original parser)
-	d := readRaw(s)
+	var dB *bytes.Buffer
 
-	if bytes.Equal(d.Bytes(), []byte(`\N`)) {
+	dType := p.DataParser.Type()
+
+	switch dType {
+	case reflectTypeInt8, reflectTypeInt16, reflectTypeInt32, reflectTypeInt64,
+		reflectTypeUInt8, reflectTypeUInt16, reflectTypeUInt32, reflectTypeUInt64,
+		reflectTypeFloat32, reflectTypeFloat64:
+		d, err := readNumber(s)
+		if err != nil {
+			return nil, nil
+		}
+
+		dB = bytes.NewBufferString(d)
+	case reflectTypeString:
+		runes := ""
+
+		iter := 0
+		//not sure about safety ^^
+		for {
+			r, _, err := s.ReadRune()
+			if err != nil {
+				return nil, nil
+			}
+
+			isEscaped := false
+			if r == '\\' {
+				escaped, err := readEscaped(s)
+				if err != nil {
+					return "", fmt.Errorf("incorrect escaping in string: %v", err)
+				}
+				isEscaped = true
+				r = escaped
+				if r == '\'' {
+					runes += string('\\')
+				}
+			}
+
+			runes += string(r)
+
+			if r == '\'' && iter != 0 && !isEscaped {
+				break
+			}
+			iter++
+		}
+
+		dB = bytes.NewBufferString(runes)
+	case reflectTypeTime:
+		d := readRaw(s)
+		dB = d
+	case reflectTypeEmptyStruct:
+		d := readRaw(s)
+		dB = d
+	default:
+		d := readRaw(s)
+		dB = d
+	}
+
+	if bytes.Equal(dB.Bytes(), []byte(`\N`)) {
 		return nil, nil
 	}
 
-	return p.DataParser.Parse(d)
+	return p.DataParser.Parse(dB)
 }
 
 func readNumber(s io.RuneScanner) (string, error) {
@@ -229,6 +285,10 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		v, err := p.arg.Parse(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse array element: %v", err)
+		}
+		if v == nil {
+			//need check if v is nil: panic otherwise
+			return nil, fmt.Errorf("unexpected nil element")
 		}
 
 		slice = reflect.Append(slice, reflect.ValueOf(v))

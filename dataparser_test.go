@@ -369,3 +369,91 @@ func TestParseData(t *testing.T) {
 		})
 	}
 }
+
+func TestParseDataNewNullableArray(t *testing.T) {
+	type testCase struct {
+		name          string
+		inputtype     string
+		inputopt      *DataParserOptions
+		inputdata     string
+		output        interface{}
+		failParseDesc bool
+		failNewParser bool
+		failParseData bool
+	}
+
+	testCases := []*testCase{
+		{
+			name:      "array of ints",
+			inputtype: "Array(UInt64)",
+			inputdata: "[1,2,3]",
+			output:    []uint64{1, 2, 3},
+		},
+		{
+			name:      "array of nullable ints",
+			inputtype: "Array(Nullable(UInt64))",
+			inputdata: "[1,2,3]",
+			output:    []uint64{1, 2, 3},
+		},
+		{
+			name:      "empty array of nullable ints",
+			inputtype: "Array(Nullable(UInt64))",
+			inputdata: "[]",
+			output:    []uint64{},
+		},
+		{
+			name:      "array of strings",
+			inputtype: "Array(String)",
+			inputdata: "['133','2']",
+			output:    []string{"133", "2"},
+		},
+		{
+			name:      "array of nullable strings",
+			inputtype: "Array(Nullable(String))",
+			inputdata: `['a\taa\',','255']`,
+			output:    []string{"a\taa',", "255"},
+		},
+		{
+			name:          "array of nullable strings",
+			inputtype:     "Array(Nullable(String))",
+			inputdata:     "['aaa,]",
+			output:        nil,
+			failParseData: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(tt *testing.T) {
+			desc, err := ParseTypeDesc(tc.inputtype)
+			if tc.failParseDesc {
+				assert.Error(tt, err)
+				return
+			}
+			if !assert.NoError(tt, err) {
+				return
+			}
+			t.Log(desc.Name, desc.Args)
+
+			parser, err := newDataParser(desc, false, tc.inputopt)
+			if tc.failNewParser {
+				assert.Error(tt, err)
+				return
+			}
+			if !assert.NoError(tt, err) {
+				return
+			}
+
+			t.Log(parser.Type(), tc.inputdata)
+			output, err := parser.Parse(strings.NewReader(tc.inputdata))
+			if tc.failParseData {
+				assert.Error(tt, err)
+				return
+			}
+			if !assert.NoError(tt, err) {
+				return
+			}
+
+			assert.Equal(tt, tc.output, output)
+		})
+	}
+}
