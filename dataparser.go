@@ -67,13 +67,21 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		dB = bytes.NewBufferString(d)
 	case reflectTypeString:
 		runes := ""
-
 		iter := 0
 		//not sure about safety ^^
+		isNotString := false
 		for {
 			r, _, err := s.ReadRune()
 			if err != nil {
 				return nil, nil
+			}
+
+			if r != '\'' && iter == 0 {
+				s.UnreadRune()
+				d := readRaw(s)
+				dB = d
+				isNotString = true
+				break
 			}
 
 			isEscaped := false
@@ -97,7 +105,9 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 			iter++
 		}
 
-		dB = bytes.NewBufferString(runes)
+		if !isNotString {
+			dB = bytes.NewBufferString(runes)
+		}
 	case reflectTypeTime:
 		runes := ""
 

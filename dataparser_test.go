@@ -395,6 +395,31 @@ func TestParseDataNewNullableArray(t *testing.T) {
 
 	testCases := []*testCase{
 		{
+			name:      "nullable(decimal)",
+			inputtype: "Nullable(Decimal(9,4))",
+			inputdata: "123",
+			output:    "123",
+		},
+		{
+			name:      "nullable(enum)",
+			inputtype: "Nullable(Enum8('hello' = 1, 'world' = 2))",
+			inputdata: "hello",
+			output:    "hello",
+		},
+		{
+			name:      "nullable(uuid)",
+			inputtype: "Nullable(UUID)",
+			inputdata: "c79a9747-7cef-4b11-8177-380f7ed462a4",
+			output:    "c79a9747-7cef-4b11-8177-380f7ed462a4",
+		},
+		{
+			name:      "nullable low cardinality string",
+			inputtype: "Nullable(LowCardinality(String))",
+			inputdata: "hello",
+			output:    "hello",
+		},
+		//////////////////////////////////////////////////////
+		{
 			name:      "array(nullable(datetime)), without options and argument",
 			inputtype: "Array(Nullable(DateTime))",
 			inputdata: "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
