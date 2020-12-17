@@ -401,10 +401,22 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			output:    "123",
 		},
 		{
+			name:      "array(nullable(decimal))",
+			inputtype: "Array(Nullable(Decimal(9,4)))",
+			inputdata: "['123','555.6']",
+			output:    []string{"123", "555.6"},
+		},
+		{
 			name:      "nullable(enum)",
 			inputtype: "Nullable(Enum8('hello' = 1, 'world' = 2))",
 			inputdata: "hello",
 			output:    "hello",
+		},
+		{
+			name:      "array(nullable(enum))",
+			inputtype: "Array(Nullable(Enum8('hello' = 1, 'world' = 2)))",
+			inputdata: "['hello','hi']",
+			output:    []string{"hello", "hi"},
 		},
 		{
 			name:      "nullable(uuid)",
@@ -413,10 +425,28 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			output:    "c79a9747-7cef-4b11-8177-380f7ed462a4",
 		},
 		{
+			name:      "array(nullable(uuid))",
+			inputtype: "Array(Nullable(UUID))",
+			inputdata: "['c79a9747-7cef-4b11-8177-380f7ed462a4','00000000-0000-0000-0000-000000000000']",
+			output:    []string{"c79a9747-7cef-4b11-8177-380f7ed462a4", "00000000-0000-0000-0000-000000000000"},
+		},
+		{
 			name:      "nullable low cardinality string",
 			inputtype: "Nullable(LowCardinality(String))",
 			inputdata: "hello",
 			output:    "hello",
+		},
+		{
+			name:      "array of nullable low cardinality string",
+			inputtype: "Array(Nullable(LowCardinality(String)))",
+			inputdata: "['hello','hi']",
+			output:    []string{"hello", "hi"},
+		},
+		{
+			name:      "array of nullable low cardinality UInt64",
+			inputtype: "Array(Nullable(LowCardinality(UInt64)))",
+			inputdata: "[123,555]",
+			output:    []uint64{123, 555},
 		},
 		//////////////////////////////////////////////////////
 		{
