@@ -99,8 +99,29 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 
 		dB = bytes.NewBufferString(runes)
 	case reflectTypeTime:
-		d := readRaw(s)
-		dB = d
+		runes := ""
+
+		iter := 0
+		//not sure about safety ^^
+		for {
+			r, _, err := s.ReadRune()
+			if err != nil {
+				return nil, nil
+			}
+
+			runes += string(r)
+
+			if r == '\'' && iter != 0 {
+				break
+			}
+			iter++
+		}
+
+		if runes == "0000-00-00" || runes == "0000-00-00 00:00:00" {
+			return time.Time{}, nil
+		}
+
+		dB = bytes.NewBufferString(runes)
 	case reflectTypeEmptyStruct:
 		d := readRaw(s)
 		dB = d

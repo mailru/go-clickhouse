@@ -382,7 +382,159 @@ func TestParseDataNewNullableArray(t *testing.T) {
 		failParseData bool
 	}
 
+	losAngeles, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		t.Fatalf("failed to load time zone America/Los_Angeles: %v", err)
+	}
+	moscow, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		t.Fatalf("failed to load time zone Europe/Moscow: %v", err)
+	}
+
+	t.Log(losAngeles, moscow)
+
 	testCases := []*testCase{
+		{
+			name:      "array(nullable(datetime)), without options and argument",
+			inputtype: "Array(Nullable(DateTime))",
+			inputdata: "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
+			output: []time.Time{
+				time.Date(2018, 1, 2, 12, 34, 56, 0, time.UTC),
+				{},
+			},
+		},
+		{
+			name:      "array(nullable(datetime)), with argument",
+			inputtype: "Array(Nullable(DateTime('America/Los_Angeles')))",
+			inputdata: "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
+			output: []time.Time{
+				time.Date(2018, 1, 2, 12, 34, 56, 0, losAngeles),
+				{},
+			},
+		},
+		{
+			name:      "array(nullable(datetime)) with argument, but location nil",
+			inputtype: "Array(Nullable(DateTime('America/Los_Angeles')))",
+			inputdata: "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
+			inputopt: &DataParserOptions{
+				Location: nil,
+			},
+			output: []time.Time{
+				time.Date(2018, 1, 2, 12, 34, 56, 0, losAngeles),
+				{},
+			},
+		},
+		{
+			name:      "array(nullable(datetime)) without argument, but use location",
+			inputtype: "Array(Nullable(DateTime))",
+			inputdata: "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
+			inputopt: &DataParserOptions{
+				Location: moscow,
+			},
+			output: []time.Time{
+				time.Date(2018, 1, 2, 12, 34, 56, 0, moscow),
+				{},
+			},
+		},
+		{
+			name:      "array(nullable(datetime)) with argument and location, ingnore argument",
+			inputtype: "Array(Nullable(DateTime('America/Los_Angeles')))",
+			inputdata: "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
+			inputopt: &DataParserOptions{
+				Location: moscow,
+			},
+			output: []time.Time{
+				time.Date(2018, 1, 2, 12, 34, 56, 0, moscow),
+				{},
+			},
+		},
+		{
+			name:      "array(nullable(datetime)) with argument and location, prefer argument",
+			inputtype: "Array(Nullable(DateTime('America/Los_Angeles')))",
+			inputdata: "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
+			inputopt: &DataParserOptions{
+				Location:      moscow,
+				UseDBLocation: true,
+			},
+			output: []time.Time{
+				time.Date(2018, 1, 2, 12, 34, 56, 0, losAngeles),
+				{},
+			},
+		},
+		{
+			name:          "array(nullable(datetime)) in nowhere",
+			inputtype:     "Array(Nullable(DateTime('Nowhere')))",
+			inputdata:     "['2018-01-02 12:34:56','0000-00-00 00:00:00']",
+			failNewParser: true,
+		},
+		{
+			name:      "zero array(nullable(datetime))",
+			inputtype: "Array(Nullable(DateTime))",
+			inputdata: "['0000-00-00 00:00:00','0000-00-00 00:00:00']",
+			output: []time.Time{
+				{},
+				{},
+			},
+		},
+		{
+			name:      "short array(nullable(datetime))",
+			inputtype: "Array(Nullable(DateTime))",
+			inputdata: "['000-00-00 00:00:00','000-00-00 00:00:00']",
+			output: []time.Time{
+				{},
+				{},
+			},
+			failParseData: true,
+		},
+		{
+			name:      "malformed array(nullable(datetime))",
+			inputtype: "Array(Nullable(DateTime))",
+			inputdata: "['0000-00-00 00:00:00','a000-00-00 00:00:00']",
+			output: []time.Time{
+				{},
+				{},
+			},
+			failParseData: true,
+		},
+		////////////////////////////////////////////////////
+		{
+			name:      "array of dates",
+			inputtype: "Array(Date)",
+			inputdata: "['2018-01-02','0000-00-00']",
+			output: []time.Time{
+				time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC),
+				{},
+			},
+		},
+		{
+			name:      "array of nullable dates",
+			inputtype: "Array(Nullable(Date))",
+			inputdata: "['2018-01-02','0000-00-00']",
+			output: []time.Time{
+				time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC),
+				{},
+			},
+		},
+		{
+			name:          "malformed array(nullable(date))",
+			inputtype:     "Array(Nullable(Date))",
+			inputdata:     "['a000-00-00 00:00:00']",
+			output:        []time.Time{{},},
+			failParseData: true,
+		},
+		{
+			name:      "array of nullable dates with special timezone",
+			inputtype: "Array(Nullable(Date))",
+			inputdata: "['2019-06-29','0000-00-00']",
+			inputopt: &DataParserOptions{
+				Location: losAngeles,
+			},
+			output: []time.Time{
+				time.Date(2019, 6, 29, 0, 0, 0, 0, losAngeles),
+				{},
+			},
+		},
+		//////////////////////////////////////////////////
 		{
 			name:      "array of ints",
 			inputtype: "Array(UInt64)",
@@ -401,6 +553,14 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			inputdata: "[]",
 			output:    []uint64{},
 		},
+		{
+			name:          "bad array of nullable ints",
+			inputtype:     "Array(Nullable(UInt64))",
+			inputdata:     "[1,,]",
+			output:        []uint64{},
+			failParseData: true,
+		},
+		//////////////////////////////////////////////////
 		{
 			name:      "array of strings",
 			inputtype: "Array(String)",
