@@ -29,6 +29,8 @@ func (c *conn) Ping(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	// Close response body to enable connection reuse
+	defer respBody.Close()
 	resp, err := ioutil.ReadAll(respBody)
 	if err != nil {
 		return err
