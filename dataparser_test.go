@@ -395,6 +395,48 @@ func TestParseDataNewNullableArray(t *testing.T) {
 
 	testCases := []*testCase{
 		{
+			name:      "nullable null string",
+			inputtype: "Nullable(String)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable null UInt64",
+			inputtype: "Nullable(UInt64)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable null decimal",
+			inputtype: "Nullable(Decimal)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable null datetime",
+			inputtype: "Nullable(DateTime)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable null enum",
+			inputtype: "Nullable(Enum8('hello' = 1, 'world' = 2))",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable null uuid",
+			inputtype: "Nullable(UUID)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable null Date",
+			inputtype: "Nullable(Date)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
 			name:      "nullable(decimal)",
 			inputtype: "Nullable(Decimal(9,4))",
 			inputdata: "123",
@@ -574,7 +616,7 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			name:          "malformed array(nullable(date))",
 			inputtype:     "Array(Nullable(Date))",
 			inputdata:     "['a000-00-00 00:00:00']",
-			output:        []time.Time{{},},
+			output:        []time.Time{{}},
 			failParseData: true,
 		},
 		{

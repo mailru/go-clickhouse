@@ -112,7 +112,6 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		runes := ""
 
 		iter := 0
-		//not sure about safety ^^
 		for {
 			r, _, err := s.ReadRune()
 			if err != nil {
