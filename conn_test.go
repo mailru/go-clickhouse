@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"compress/gzip"
 	"context"
 	"database/sql"
 	"database/sql/driver"
@@ -376,6 +377,24 @@ func (s *connSuite) TestBuildRequestParamsInterpolation() {
 		body, e := ioutil.ReadAll(req.Body)
 		if s.NoError(e) {
 			s.Equal(query, string(body))
+		}
+	}
+}
+
+func (s *connSuite) TestRequestBodyGzipCompression() {
+	query := `INSERT INTO test (str) VALUES ("Question?")`
+	cn := newConn(NewConfig())
+	cn.useGzipCompression = true
+	req, err := cn.buildRequest(context.Background(), query, make([]driver.Value, 0), false)
+	if s.NoError(err) {
+		s.Contains(req.Header, "Content-Encoding")
+		gz, err := gzip.NewReader(req.Body)
+		if s.NoError(err) {
+			defer gz.Close()
+			body, e := ioutil.ReadAll(gz)
+			if s.NoError(e) {
+				s.Equal(query, string(body))
+			}
 		}
 	}
 }
