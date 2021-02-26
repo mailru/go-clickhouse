@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"compress/gzip"
 	"context"
 	"database/sql"
 	"database/sql/driver"
@@ -13,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -302,7 +302,21 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		method = http.MethodPost
 	}
 	c.log("query: ", query)
-	req, err := http.NewRequest(method, c.url.String(), strings.NewReader(query))
+
+	bodyReader, bodyWriter := io.Pipe()
+	go func() {
+		if c.useGzipCompression {
+			gz := gzip.NewWriter(bodyWriter)
+			_, err := gz.Write([]byte(query))
+			gz.Close()
+			bodyWriter.CloseWithError(err)
+		} else {
+			bodyWriter.Write([]byte(query))
+			bodyWriter.Close()
+		}
+	}()
+
+	req, err := http.NewRequest(method, c.url.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}
@@ -334,6 +348,10 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		reqQuery.Add(queryIDParamName, queryID)
 	}
 	req.URL.RawQuery = reqQuery.Encode()
+
+	if c.useGzipCompression {
+		req.Header.Set("Content-Encoding", "gzip")
+	}
 
 	return req, nil
 }
