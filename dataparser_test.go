@@ -395,6 +395,52 @@ func TestParseDataNewNullableArray(t *testing.T) {
 
 	testCases := []*testCase{
 		{
+			name:      "array of nullable null String",
+			inputtype: "Array(Nullable(String))",
+			inputdata: `['ss','\N','dd','ff']`,
+			output:    []string{"ss", "dd", "ff"},
+		},
+		{
+			name:      "array(nullable(uuid))",
+			inputtype: "Array(Nullable(UUID))",
+			inputdata: `['c79a9747-7cef-4b11-8177-380f7ed462a4','\N','00000000-0000-0000-0000-000000000000']`,
+			output:    []string{"c79a9747-7cef-4b11-8177-380f7ed462a4", "00000000-0000-0000-0000-000000000000"},
+		},
+		{
+			name:      "array of nullable null UInt64",
+			inputtype: "Array(Nullable(UInt64))",
+			inputdata: `[1,\N,5,9]`,
+			output:    []uint64{1, 5, 9},
+		},
+		{
+			name:      "array of nullable null UInt16",
+			inputtype: "Array(Nullable(UInt16))",
+			inputdata: `[1,2,\N]`,
+			output:    []uint16{1, 2},
+		},
+		{
+			name:          "malformed array(nullable(date))",
+			inputtype:     "Array(Nullable(Date))",
+			inputdata:     `['a000-00-00 00:00:00', '\N']`,
+			output:        []time.Time{{}},
+			failParseData: true,
+		},
+		{
+			name:      "array of nullable null Float64",
+			inputtype: "Array(Nullable(Float64))",
+			inputdata: `[1.9,\N,5.3,9.9]`,
+			output:    []float64{1.9, 5.3, 9.9},
+		},
+		{
+			name:      "array(nullable(datetime)), without options and argument",
+			inputtype: "Array(Nullable(DateTime))",
+			inputdata: `['2018-01-02 12:34:56','\N','0000-00-00 00:00:00']`,
+			output: []time.Time{
+				time.Date(2018, 1, 2, 12, 34, 56, 0, time.UTC),
+				{},
+			},
+		},
+		{
 			name:      "nullable null string",
 			inputtype: "Nullable(String)",
 			inputdata: `\N`,

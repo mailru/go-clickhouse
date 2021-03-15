@@ -61,19 +61,19 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		reflectTypeFloat32, reflectTypeFloat64:
 		d, err := readNumber(s)
 		if err != nil {
-			return nil, nil
+			return nil, fmt.Errorf("error: %v", err)
 		}
 
 		dB = bytes.NewBufferString(d)
 	case reflectTypeString:
 		runes := ""
 		iter := 0
-		//not sure about safety ^^
+
 		isNotString := false
 		for {
 			r, _, err := s.ReadRune()
 			if err != nil {
-				return nil, nil
+				return nil, fmt.Errorf("error: %v", err)
 			}
 
 			if r != '\'' && iter == 0 {
@@ -90,6 +90,7 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 				if err != nil {
 					return "", fmt.Errorf("incorrect escaping in string: %v", err)
 				}
+
 				isEscaped = true
 				r = escaped
 				if r == '\'' {
@@ -103,6 +104,10 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 				break
 			}
 			iter++
+		}
+
+		if bytes.Equal([]byte(runes), []byte(`'N'`)) {
+			return nil, nil
 		}
 
 		if !isNotString {
@@ -128,6 +133,10 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 
 		if runes == "0000-00-00" || runes == "0000-00-00 00:00:00" {
 			return time.Time{}, nil
+		}
+
+		if bytes.Equal([]byte(runes), []byte(`'\N'`)) {
+			return nil, nil
 		}
 
 		dB = bytes.NewBufferString(runes)
@@ -316,12 +325,15 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse array element: %v", err)
 		}
-		if v == nil {
-			//need check if v is nil: panic otherwise
-			return nil, fmt.Errorf("unexpected nil element")
-		}
 
-		slice = reflect.Append(slice, reflect.ValueOf(v))
+		if v == nil {
+			if reflect.TypeOf(p.arg) != reflect.TypeOf(&nullableParser{}) {
+				//need check if v is nil: panic otherwise
+				return nil, fmt.Errorf("unexpected nil element")
+			}
+		} else {
+			slice = reflect.Append(slice, reflect.ValueOf(v))
+		}
 
 		r = read(s)
 		if r != ',' {
