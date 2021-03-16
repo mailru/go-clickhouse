@@ -51,13 +51,108 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	// Clickhouse returns `\N` string for `null` in tsv format.
 	// For checking this value we need to check first two runes in `io.RuneScanner`, but we can't reset `io.RuneScanner` after it.
 	// Copy io.RuneScanner to `bytes.Buffer` and use it twice (1st for casting to string and checking to null, 2nd for passing to original parser)
-	d := readRaw(s)
+	var dB *bytes.Buffer
 
-	if bytes.Equal(d.Bytes(), []byte(`\N`)) {
+	dType := p.DataParser.Type()
+
+	switch dType {
+	case reflectTypeInt8, reflectTypeInt16, reflectTypeInt32, reflectTypeInt64,
+		reflectTypeUInt8, reflectTypeUInt16, reflectTypeUInt32, reflectTypeUInt64,
+		reflectTypeFloat32, reflectTypeFloat64:
+		d, err := readNumber(s)
+		if err != nil {
+			return nil, fmt.Errorf("error: %v", err)
+		}
+
+		dB = bytes.NewBufferString(d)
+	case reflectTypeString:
+		runes := ""
+		iter := 0
+
+		isNotString := false
+		for {
+			r, _, err := s.ReadRune()
+			if err != nil {
+				return nil, fmt.Errorf("error: %v", err)
+			}
+
+			if r != '\'' && iter == 0 {
+				s.UnreadRune()
+				d := readRaw(s)
+				dB = d
+				isNotString = true
+				break
+			}
+
+			isEscaped := false
+			if r == '\\' {
+				escaped, err := readEscaped(s)
+				if err != nil {
+					return "", fmt.Errorf("incorrect escaping in string: %v", err)
+				}
+
+				isEscaped = true
+				r = escaped
+				if r == '\'' {
+					runes += string('\\')
+				}
+			}
+
+			runes += string(r)
+
+			if r == '\'' && iter != 0 && !isEscaped {
+				break
+			}
+			iter++
+		}
+
+		if bytes.Equal([]byte(runes), []byte(`'N'`)) {
+			return nil, nil
+		}
+
+		if !isNotString {
+			dB = bytes.NewBufferString(runes)
+		}
+	case reflectTypeTime:
+		runes := ""
+
+		iter := 0
+		for {
+			r, _, err := s.ReadRune()
+			if err != nil {
+				return nil, nil
+			}
+
+			runes += string(r)
+
+			if r == '\'' && iter != 0 {
+				break
+			}
+			iter++
+		}
+
+		if runes == "0000-00-00" || runes == "0000-00-00 00:00:00" {
+			return time.Time{}, nil
+		}
+
+		if bytes.Equal([]byte(runes), []byte(`'\N'`)) {
+			return nil, nil
+		}
+
+		dB = bytes.NewBufferString(runes)
+	case reflectTypeEmptyStruct:
+		d := readRaw(s)
+		dB = d
+	default:
+		d := readRaw(s)
+		dB = d
+	}
+
+	if bytes.Equal(dB.Bytes(), []byte(`\N`)) {
 		return nil, nil
 	}
 
-	return p.DataParser.Parse(d)
+	return p.DataParser.Parse(dB)
 }
 
 func readNumber(s io.RuneScanner) (string, error) {
@@ -231,7 +326,14 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 			return nil, fmt.Errorf("failed to parse array element: %v", err)
 		}
 
-		slice = reflect.Append(slice, reflect.ValueOf(v))
+		if v == nil {
+			if reflect.TypeOf(p.arg) != reflect.TypeOf(&nullableParser{}) {
+				//need check if v is nil: panic otherwise
+				return nil, fmt.Errorf("unexpected nil element")
+			}
+		} else {
+			slice = reflect.Append(slice, reflect.ValueOf(v))
+		}
 
 		r = read(s)
 		if r != ',' {

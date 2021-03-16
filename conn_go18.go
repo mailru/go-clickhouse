@@ -22,15 +22,14 @@ func (c *conn) Ping(ctx context.Context) error {
 
 	respBody, err := c.doRequest(ctx, req)
 	defer func() {
-		if respBody != nil {
-			respBody.Close()
-		}
 		c.cancel = nil
 	}()
 	if err != nil {
 		return err
 	}
 
+	// Close response body to enable connection reuse
+	defer respBody.Close()
 	resp, err := ioutil.ReadAll(respBody)
 	if err != nil || !strings.HasPrefix(string(resp), "1") {
 		return driver.ErrBadConn

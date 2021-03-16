@@ -1,18 +1,19 @@
 package clickhouse
 
 import (
+	"compress/gzip"
 	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -211,6 +212,8 @@ func (c *conn) killQuery(req *http.Request, args []driver.Value) error {
 		return err
 	}
 	if body != nil {
+		// Drain body to enable connection reuse
+		io.Copy(ioutil.Discard, body)
 		body.Close()
 	}
 	return nil
@@ -248,6 +251,8 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	}
 	body, err := c.doRequest(ctx, req)
 	if body != nil {
+		// Drain body to enable connection reuse
+		io.Copy(ioutil.Discard, body)
 		body.Close()
 	}
 	return emptyResult, err
@@ -291,14 +296,29 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		}
 	}
 
-	var bodyReader io.Reader
+	var (
+    bodyReader io.Reader
+    bodyWriter io.Writer
+  )
 	if readonly {
 		method = http.MethodGet
 	} else {
 		method = http.MethodPost
-		bodyReader = strings.NewReader(query)
+		bodyReader, bodyWriter := io.Pipe()
+    go func() {
+      if c.useGzipCompression {
+        gz := gzip.NewWriter(bodyWriter)
+        _, err := gz.Write([]byte(query))
+        gz.Close()
+        bodyWriter.CloseWithError(err)
+      } else {
+        bodyWriter.Write([]byte(query))
+        bodyWriter.Close()
+      }
+    }()
 	}
 	c.log("query: ", query)
+
 	req, err := http.NewRequest(method, c.url.String(), bodyReader)
 	if err != nil {
 		return nil, err
@@ -346,7 +366,12 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		req.URL.RawQuery = reqQuery.Encode()
 	}
 
-	return req, err
+
+	if c.useGzipCompression {
+		req.Header.Set("Content-Encoding", "gzip")
+	}
+
+	return req, nil
 }
 
 func (c *conn) prepare(query string) (*stmt, error) {
