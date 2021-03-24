@@ -297,25 +297,25 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 	}
 
 	var (
-    bodyReader io.Reader
-    bodyWriter io.Writer
-  )
+		bodyReader io.Reader
+		bodyWriter io.Writer
+	)
 	if readonly {
 		method = http.MethodGet
 	} else {
 		method = http.MethodPost
-		bodyReader, bodyWriter := io.Pipe()
-    go func() {
-      if c.useGzipCompression {
-        gz := gzip.NewWriter(bodyWriter)
-        _, err := gz.Write([]byte(query))
-        gz.Close()
-        bodyWriter.CloseWithError(err)
-      } else {
-        bodyWriter.Write([]byte(query))
-        bodyWriter.Close()
-      }
-    }()
+		bodyReader, bodyWriter = io.Pipe()
+		go func() {
+			if c.useGzipCompression {
+				gz := gzip.NewWriter(bodyWriter)
+				_, err := gz.Write([]byte(query))
+				gz.Close()
+				bodyWriter.CloseWithError(err)
+			} else {
+				bodyWriter.Write([]byte(query))
+				bodyWriter.Close()
+			}
+		}()
 	}
 	c.log("query: ", query)
 
@@ -365,7 +365,6 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 	if reqQuery != nil {
 		req.URL.RawQuery = reqQuery.Encode()
 	}
-
 
 	if c.useGzipCompression {
 		req.Header.Set("Content-Encoding", "gzip")
