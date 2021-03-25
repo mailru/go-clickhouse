@@ -290,15 +290,15 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		method string
 		err    error
 	)
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		if query, err = interpolateParams(query, params); err != nil {
 			return nil, err
 		}
 	}
 
 	var (
-		bodyReader io.Reader
-		bodyWriter io.Writer
+		bodyReader *io.PipeReader
+		bodyWriter *io.PipeWriter
 	)
 	if readonly {
 		method = http.MethodGet
