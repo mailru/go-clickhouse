@@ -297,8 +297,8 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 	}
 
 	var (
-		bodyReader *io.PipeReader
-		bodyWriter *io.PipeWriter
+		bodyReader io.Reader
+		bodyWriter io.WriteCloser
 	)
 	if readonly {
 		method = http.MethodGet
@@ -308,9 +308,9 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		go func() {
 			if c.useGzipCompression {
 				gz := gzip.NewWriter(bodyWriter)
-				_, err := gz.Write([]byte(query))
+				gz.Write([]byte(query))
 				gz.Close()
-				bodyWriter.CloseWithError(err)
+				bodyWriter.Close()
 			} else {
 				bodyWriter.Write([]byte(query))
 				bodyWriter.Close()
