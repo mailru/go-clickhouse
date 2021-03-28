@@ -268,7 +268,7 @@ type tupleParser struct {
 }
 
 func (p *tupleParser) Type() reflect.Type {
-	fields := make([]reflect.StructField, len(p.args), len(p.args))
+	fields := make([]reflect.StructField, len(p.args))
 	for i, arg := range p.args {
 		fields[i].Name = "Field" + strconv.Itoa(i)
 		fields[i].Type = arg.Type()
@@ -573,7 +573,7 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		if len(t.Args) < 1 {
 			return nil, fmt.Errorf("element types not specified for Tuple")
 		}
-		subParsers := make([]DataParser, len(t.Args), len(t.Args))
+		subParsers := make([]DataParser, len(t.Args))
 		for i, arg := range t.Args {
 			subParser, err := newDataParser(arg, true, opt)
 			if err != nil {

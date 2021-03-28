@@ -31,7 +31,7 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 		}
 	}
 
-	parsers := make([]DataParser, len(types), len(types))
+	parsers := make([]DataParser, len(types))
 	for i, typ := range types {
 		desc, err := ParseTypeDesc(typ)
 		if err != nil {

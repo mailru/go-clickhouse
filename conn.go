@@ -282,7 +282,6 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		}
 		return nil, err
 	}
-
 	return resp.Body, nil
 }
 
@@ -291,65 +290,83 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		method string
 		err    error
 	)
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		if query, err = interpolateParams(query, params); err != nil {
 			return nil, err
 		}
 	}
+
+	var (
+		bodyReader io.Reader
+		bodyWriter io.WriteCloser
+	)
 	if readonly {
 		method = http.MethodGet
 	} else {
 		method = http.MethodPost
+		bodyReader, bodyWriter = io.Pipe()
+		go func() {
+			if c.useGzipCompression {
+				gz := gzip.NewWriter(bodyWriter)
+				gz.Write([]byte(query))
+				gz.Close()
+				bodyWriter.Close()
+			} else {
+				bodyWriter.Write([]byte(query))
+				bodyWriter.Close()
+			}
+		}()
 	}
 	c.log("query: ", query)
-
-	bodyReader, bodyWriter := io.Pipe()
-	go func() {
-		if c.useGzipCompression {
-			gz := gzip.NewWriter(bodyWriter)
-			_, err := gz.Write([]byte(query))
-			gz.Close()
-			bodyWriter.CloseWithError(err)
-		} else {
-			bodyWriter.Write([]byte(query))
-			bodyWriter.Close()
-		}
-	}()
 
 	req, err := http.NewRequest(method, c.url.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}
+
 	// http.Transport ignores url.User argument, handle it here
 	if c.user != nil {
 		p, _ := c.user.Password()
 		req.SetBasicAuth(c.user.Username(), p)
 	}
-	var queryID, quotaKey string
+
+	var reqQuery url.Values
 	if ctx != nil {
-		quotaKey, _ = ctx.Value(QuotaKey).(string)
-		queryID, _ = ctx.Value(QueryID).(string)
-	}
-
-	if c.killQueryOnErr && queryID == "" {
-		queryUUID, err := uuid.NewV4()
-		if err != nil {
-			c.log("can't generate query_id: ", err)
-		} else {
-			queryID = queryUUID.String()
+		quotaKey, quotaOk := ctx.Value(QuotaKey).(string)
+		if quotaOk && quotaKey != "" {
+			if reqQuery == nil {
+				reqQuery = req.URL.Query()
+			}
+			reqQuery.Add(quotaKeyParamName, quotaKey)
 		}
+		queryID, queryOk := ctx.Value(QueryID).(string)
+		if c.killQueryOnErr && (!queryOk || queryID == "") {
+			queryUUID, err := uuid.NewV4()
+			if err != nil {
+				c.log("can't generate query_id: ", err)
+			} else {
+				queryID = queryUUID.String()
+			}
+		}
+		if queryID != "" {
+			if reqQuery == nil {
+				reqQuery = req.URL.Query()
+			}
+			reqQuery.Add(queryIDParamName, queryID)
+		}
+
+	}
+	if method == http.MethodGet {
+		if reqQuery == nil {
+			reqQuery = req.URL.Query()
+		}
+		reqQuery.Add("query", query)
+	}
+	if reqQuery != nil {
+		req.URL.RawQuery = reqQuery.Encode()
 	}
 
-	reqQuery := req.URL.Query()
-	if quotaKey != "" {
-		reqQuery.Add(quotaKeyParamName, quotaKey)
-	}
-	if queryID != "" {
-		reqQuery.Add(queryIDParamName, queryID)
-	}
-	req.URL.RawQuery = reqQuery.Encode()
-
-	if c.useGzipCompression {
+	if method == http.MethodPost && c.useGzipCompression {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
