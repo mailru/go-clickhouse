@@ -333,7 +333,7 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 	var reqQuery url.Values
 	if ctx != nil {
 		quotaKey, quotaOk := ctx.Value(QuotaKey).(string)
-		if quotaOk {
+		if quotaOk && quotaKey != "" {
 			if reqQuery == nil {
 				reqQuery = req.URL.Query()
 			}
