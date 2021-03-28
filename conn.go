@@ -366,7 +366,7 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		req.URL.RawQuery = reqQuery.Encode()
 	}
 
-	if c.useGzipCompression {
+	if method == http.MethodPost && c.useGzipCompression {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
