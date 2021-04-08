@@ -2,7 +2,6 @@ package clickhouse
 
 import (
 	"database/sql/driver"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"reflect"
@@ -10,10 +9,12 @@ import (
 	"time"
 )
 
+type DataReader interface {
+	Read() (record []string, err error)
+}
+
 func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLocation bool) (*textRows, error) {
-	tsvReader := csv.NewReader(body)
-	tsvReader.Comma = '\t'
-	tsvReader.LazyQuotes = true
+	tsvReader := newReader(body)
 
 	columns, err := tsvReader.Read()
 	if err != nil {
@@ -60,7 +61,7 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 type textRows struct {
 	c        *conn
 	respBody io.ReadCloser
-	tsv      *csv.Reader
+	tsv      DataReader
 	columns  []string
 	types    []string
 	parsers  []DataParser
@@ -79,6 +80,15 @@ func (r *textRows) Next(dest []driver.Value) error {
 	row, err := r.tsv.Read()
 	if err != nil {
 		return err
+	}
+
+	// skip row before WITH TOTALS,
+	// not but do not skip an empty line if it is part of the result
+	if len(row) == 1 && row[0] == "" && len(dest) != 1 {
+		row, err = r.tsv.Read()
+		if err != nil {
+			return err
+		}
 	}
 
 	for i, s := range row {
