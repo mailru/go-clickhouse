@@ -6,18 +6,18 @@ import (
 	"strings"
 )
 
-type tsvParser struct {
+type tsvReader struct {
 	r         *bufio.Reader
 	rawBuffer []byte
 }
 
-func newReader(r io.Reader) *tsvParser {
-	return &tsvParser{
+func newReader(r io.Reader) *tsvReader {
+	return &tsvReader{
 		r: bufio.NewReader(r),
 	}
 }
 
-func (r *tsvParser) readLine() ([]byte, error) {
+func (r *tsvReader) readLine() ([]byte, error) {
 	line, err := r.r.ReadSlice('\n')
 	if err == bufio.ErrBufferFull {
 		r.rawBuffer = append(r.rawBuffer[:0], line...)
@@ -38,7 +38,7 @@ func (r *tsvParser) readLine() ([]byte, error) {
 	return line, err
 }
 
-func (r *tsvParser) Read() (record []string, err error) {
+func (r *tsvReader) Read() (record []string, err error) {
 	line, errRead := r.readLine()
 	if errRead != nil && errRead != io.EOF {
 		return nil, errRead
