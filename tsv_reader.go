@@ -1,6 +1,10 @@
 package clickhouse
 
-import "bufio"
+import (
+	"bufio"
+	"io"
+	"strings"
+)
 
 type TsvParser struct {
 	r         *bufio.Reader
@@ -41,4 +45,3 @@ func (r *TsvParser) Read() (record []string, err error) {
 	}
 	return strings.Split(string(line), "\t"), errRead
 }
-
