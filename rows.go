@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type DataReader interface {
+type dataReader interface {
 	Read() (record []string, err error)
 }
 
@@ -61,7 +61,7 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 type textRows struct {
 	c        *conn
 	respBody io.ReadCloser
-	tsv      DataReader
+	tsv      dataReader
 	columns  []string
 	types    []string
 	parsers  []DataParser
