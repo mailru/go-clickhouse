@@ -54,7 +54,7 @@ func TestTextRows(t *testing.T) {
 }
 
 func TestTextRowsQuoted(t *testing.T) {
-	buf := bytes.NewReader([]byte("text\nArray(String)\n['Quote: \"here\"']"))
+	buf := bytes.NewReader([]byte("text\nArray(String)\n['Quote: \"here\"']\n"))
 	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
 	if !assert.NoError(t, err) {
 		return
@@ -69,7 +69,7 @@ func TestTextRowsQuoted(t *testing.T) {
 }
 
 func TestTextRowsNewLine(t *testing.T) {
-	buf := bytes.NewReader([]byte("text\nString\nHello\\nThere"))
+	buf := bytes.NewReader([]byte("text\nString\nHello\\nThere\n"))
 	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
 	if !assert.NoError(t, err) {
 		return
