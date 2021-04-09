@@ -31,7 +31,11 @@ var ddls = []string{
 			d32 Decimal32(4),
 			d64 Decimal64(4),
 			d128 Decimal128(4),
-			d10 Decimal(10, 4)
+			d10 Decimal(10, 4),
+			ipv4 IPv4,
+			ipv6 IPv6,
+			fs   FixedString(8),
+			lc   LowCardinality(String)
 	) ENGINE = Memory`,
 	`INSERT INTO data VALUES
 	 	(-1, 1, 1.0, '1', '1', [1], [10], '2011-03-06', '2011-03-06 06:20:00', 'one',   '10', '100', '1000', '1'),
@@ -40,6 +44,7 @@ var ddls = []string{
 	`,
 }
 
+// TODO: FIX TESTS
 var initialzer = new(dbInit)
 
 type dbInit struct {

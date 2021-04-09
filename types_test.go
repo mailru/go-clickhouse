@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"database/sql/driver"
+	"net"
 	"testing"
 	"time"
 
@@ -60,4 +61,17 @@ func TestDecimal(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.Equal(t, []byte("toDecimal128(100.01, 1)"), dv)
 	}
+}
+
+func TestIP(t *testing.T) {
+	ipv4 := net.ParseIP("127.0.0.1")
+	assert.NotNil(t, ipv4)
+	ipv6 := net.ParseIP("2001:44c8:129:2632:33:0:252:2")
+	assert.NotNil(t, ipv6)
+	dv, err := IP(ipv4).Value()
+	assert.NoError(t, err)
+	assert.Equal(t, "127.0.0.1", dv)
+	dv, err = IP(ipv6).Value()
+	assert.NoError(t, err)
+	assert.Equal(t, "2001:44c8:129:2632:33:0:252:2", dv)
 }

@@ -334,6 +334,18 @@ func TestParseData(t *testing.T) {
 			inputdata: "123",
 			output:    uint64(123),
 		},
+		{
+			name:      "ipv4",
+			inputtype: "IPv4",
+			inputdata: "127.0.0.1",
+			output:    "127.0.0.1",
+		},
+		{
+			name:      "ipv6",
+			inputtype: "IPv6",
+			inputdata: "2a02:aa08:e000:3100::2",
+			output:    "2a02:aa08:e000:3100::2",
+		},
 	}
 
 	for _, tc := range testCases {
