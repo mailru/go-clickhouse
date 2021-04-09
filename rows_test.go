@@ -112,3 +112,22 @@ func TestTextRowsWithStartsDoubleQuotes(t *testing.T) {
 	}
 	assert.Equal(t, []driver.Value{`"`}, dest)
 }
+
+func TestTextRowsWithEmptyLine(t *testing.T) {
+	buf := bytes.NewReader([]byte("count\ttext\nInt32\tString\n1\t\n\n2\t\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"count", "text"}, rows.Columns())
+	assert.Equal(t, []string{"Int32", "String"}, rows.types)
+	dest := make([]driver.Value, 2)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{int32(1), ""}, dest)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{int32(2), ""}, dest)
+}
