@@ -82,3 +82,33 @@ func TestTextRowsNewLine(t *testing.T) {
 	}
 	assert.Equal(t, []driver.Value{"Hello\nThere"}, dest)
 }
+
+func TestTextRowsEmpty(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nString\n\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"String"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{""}, dest)
+}
+
+func TestTextRowsWithStartsDoubleQuotes(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nString\n\"\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"String"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{`"`}, dest)
+}
