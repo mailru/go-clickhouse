@@ -304,19 +304,19 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		method = http.MethodGet
 	} else {
 		method = http.MethodPost
-		bodyReader, bodyWriter = io.Pipe()
-		go func() {
-			if c.useGzipCompression {
-				gz := gzip.NewWriter(bodyWriter)
-				gz.Write([]byte(query))
-				gz.Close()
-				bodyWriter.Close()
-			} else {
-				bodyWriter.Write([]byte(query))
-				bodyWriter.Close()
-			}
-		}()
 	}
+	bodyReader, bodyWriter = io.Pipe()
+	go func() {
+		if c.useGzipCompression && !readonly {
+			gz := gzip.NewWriter(bodyWriter)
+			gz.Write([]byte(query))
+			gz.Close()
+			bodyWriter.Close()
+		} else {
+			bodyWriter.Write([]byte(query))
+			bodyWriter.Close()
+		}
+	}()
 	c.log("query: ", query)
 
 	req, err := http.NewRequest(method, c.url.String(), bodyReader)
@@ -360,7 +360,6 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 		if reqQuery == nil {
 			reqQuery = req.URL.Query()
 		}
-		reqQuery.Add("query", query)
 	}
 	if reqQuery != nil {
 		req.URL.RawQuery = reqQuery.Encode()
