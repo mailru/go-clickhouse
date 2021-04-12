@@ -54,7 +54,7 @@ func TestTextRows(t *testing.T) {
 }
 
 func TestTextRowsQuoted(t *testing.T) {
-	buf := bytes.NewReader([]byte("text\nArray(String)\n['Quote: \"here\"']"))
+	buf := bytes.NewReader([]byte("text\nArray(String)\n['Quote: \"here\"']\n"))
 	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
 	if !assert.NoError(t, err) {
 		return
@@ -69,7 +69,7 @@ func TestTextRowsQuoted(t *testing.T) {
 }
 
 func TestTextRowsNewLine(t *testing.T) {
-	buf := bytes.NewReader([]byte("text\nString\nHello\\nThere"))
+	buf := bytes.NewReader([]byte("text\nString\nHello\\nThere\n"))
 	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
 	if !assert.NoError(t, err) {
 		return
@@ -81,4 +81,53 @@ func TestTextRowsNewLine(t *testing.T) {
 		return
 	}
 	assert.Equal(t, []driver.Value{"Hello\nThere"}, dest)
+}
+
+func TestTextRowsEmpty(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nString\n\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"String"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{""}, dest)
+}
+
+func TestTextRowsWithStartsDoubleQuotes(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nString\n\"\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"String"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{`"`}, dest)
+}
+
+func TestTextRowsWithEmptyLine(t *testing.T) {
+	buf := bytes.NewReader([]byte("count\ttext\nInt32\tString\n1\t\n\n2\t\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"count", "text"}, rows.Columns())
+	assert.Equal(t, []string{"Int32", "String"}, rows.types)
+	dest := make([]driver.Value, 2)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{int32(1), ""}, dest)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{int32(2), ""}, dest)
 }
