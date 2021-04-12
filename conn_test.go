@@ -403,3 +403,21 @@ func (s *connSuite) TestRequestBodyGzipCompression() {
 func TestConn(t *testing.T) {
 	suite.Run(t, new(connSuite))
 }
+
+func RandStringBytesRmndr(n int) string {
+    b := make([]byte, n)
+    return string(b)
+}
+
+func (s *connSuite) TestLongRequest() {
+    expected := RandStringBytesRmndr(10000)
+	rows, err := s.conn.Query("SELECT ?", expected)
+	if s.NoError(err) {
+	    rows.Next()
+	    var actual string
+	    err = rows.Scan(&actual)
+	    if s.NoError(err) {
+	        s.Equal(expected, actual)
+	    }
+	}
+}
