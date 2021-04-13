@@ -404,14 +404,14 @@ func TestConn(t *testing.T) {
 }
 
 func (s *connSuite) TestLongRequest() {
-    expected := string(make([]byte, 10000))
+	expected := string(make([]byte, 10000))
 	rows, err := s.conn.Query("SELECT ?", expected)
 	if s.NoError(err) {
-	    rows.Next()
-	    var actual string
-	    err = rows.Scan(&actual)
-	    if s.NoError(err) {
-	        s.Equal(expected, actual)
-	    }
+		rows.Next()
+		var actual string
+		err = rows.Scan(&actual)
+		if s.NoError(err) {
+			s.Equal(expected, actual)
+		}
 	}
 }
