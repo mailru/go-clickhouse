@@ -146,3 +146,18 @@ func TestInt32RowsEmpty(t *testing.T) {
 	}
 	assert.Equal(t, []driver.Value{int64(1)}, dest)
 }
+
+func TestFloat64RowsEmpty(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nFloat64\n\n1.0\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"Float64"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{float64(1)}, dest)
+}

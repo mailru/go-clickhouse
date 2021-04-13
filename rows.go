@@ -84,12 +84,10 @@ func (r *textRows) Next(dest []driver.Value) error {
 
 	// skip row before WITH TOTALS,
 	// not but do not skip an empty line if it is part of the result
-	var canSkip bool
-	if len(row) == 1 && row[0] == "" {
-		if len(dest) == 1 {
-			canSkip = true
-		} else {
-			return r.Next(dest)
+	if len(row) == 1 && row[0] == "" && (len(dest) != 1 || r.ColumnTypeDatabaseTypeName(0) != "String") {
+		row, err = r.tsv.Read()
+		if err != nil {
+			return err
 		}
 	}
 
@@ -97,9 +95,6 @@ func (r *textRows) Next(dest []driver.Value) error {
 		reader := strings.NewReader(s)
 		v, err := r.parsers[i].Parse(reader)
 		if err != nil {
-			if canSkip {
-				return r.Next(dest)
-			}
 			return err
 		}
 		if _, _, err := reader.ReadRune(); err != io.EOF {
