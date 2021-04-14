@@ -5,7 +5,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"io"
-	"net"
 	"reflect"
 	"strconv"
 	"time"
@@ -14,7 +13,6 @@ import (
 var (
 	reflectTypeString      = reflect.TypeOf("")
 	reflectTypeTime        = reflect.TypeOf(time.Time{})
-	reflectTypeIP          = reflect.TypeOf(net.IP{})
 	reflectTypeEmptyStruct = reflect.TypeOf(struct{}{})
 	reflectTypeInt8        = reflect.TypeOf(int8(0))
 	reflectTypeInt16       = reflect.TypeOf(int16(0))
