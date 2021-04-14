@@ -43,3 +43,25 @@ func (s *connSuite) TestExecBuild19() {
 		s.NoError(rows.Close())
 	}
 }
+
+func (s *connSuite) TestQuotedStrings() {
+	testCases := []struct {
+		query, expected1, expected2 string
+	}{
+		{
+			`SELECT '"foo" foo', 'bar'`, `"foo" foo`, "bar",
+		},
+		{
+			`SELECT 'bar', '"foo" foo'`, "bar", `"foo" foo`,
+		},
+	}
+	for _, tc := range testCases {
+		var actual1, actual2 string
+		err := s.conn.QueryRow(tc.query).Scan(&actual1, &actual2)
+		if !s.NoError(err) {
+			continue
+		}
+		s.Equal(tc.expected1, actual1)
+		s.Equal(tc.expected2, actual2)
+	}
+}
