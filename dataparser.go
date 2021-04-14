@@ -26,21 +26,85 @@ var (
 	reflectTypeFloat64     = reflect.TypeOf(float64(0))
 )
 
+func readNumber(s io.RuneScanner) (string, error) {
+	var builder bytes.Buffer
+
+loop:
+	for {
+		r := read(s)
+
+		switch r {
+		case eof:
+			break loop
+		case ',', ']', ')':
+			s.UnreadRune()
+			break loop
+		}
+
+		builder.WriteRune(r)
+	}
+
+	return builder.String(), nil
+}
+
+func readUnquoted(s io.RuneScanner, length int) (string, error) {
+	var builder bytes.Buffer
+
+	runesRead := 0
+loop:
+	for length == 0 || runesRead < length {
+		r := read(s)
+
+		switch r {
+		case eof:
+			break loop
+		case '\\':
+			escaped, err := readEscaped(s)
+			if err != nil {
+				return "", fmt.Errorf("incorrect escaping in string: %v", err)
+			}
+			r = escaped
+		case '\'':
+			s.UnreadRune()
+			break loop
+		}
+
+		builder.WriteRune(r)
+		runesRead++
+	}
+
+	if length != 0 && runesRead != length {
+		return "", fmt.Errorf("unexpected string length %d, expected %d", runesRead, length)
+	}
+
+	return builder.String(), nil
+}
+
+func readString(s io.RuneScanner, length int, unquote bool) (string, error) {
+	if unquote {
+		if r := read(s); r != '\'' {
+			return "", fmt.Errorf("unexpected character instead of a quote")
+		}
+	}
+
+	str, err := readUnquoted(s, length)
+	if err != nil {
+		return "", fmt.Errorf("failed to read string")
+	}
+
+	if unquote {
+		if r := read(s); r != '\'' {
+			return "", fmt.Errorf("unexpected character instead of a quote")
+		}
+	}
+
+	return str, nil
+}
+
 // DataParser implements parsing of a driver value and reporting its type.
 type DataParser interface {
 	Parse(io.RuneScanner) (driver.Value, error)
 	Type() reflect.Type
-}
-
-type stringParser struct {
-	unquote bool
-	length  int
-}
-
-type dateTimeParser struct {
-	unquote  bool
-	format   string
-	location *time.Location
 }
 
 type nullableParser struct {
@@ -155,79 +219,9 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	return p.DataParser.Parse(dB)
 }
 
-func readNumber(s io.RuneScanner) (string, error) {
-	var builder bytes.Buffer
-
-loop:
-	for {
-		r := read(s)
-
-		switch r {
-		case eof:
-			break loop
-		case ',', ']', ')':
-			s.UnreadRune()
-			break loop
-		}
-
-		builder.WriteRune(r)
-	}
-
-	return builder.String(), nil
-}
-
-func readUnquoted(s io.RuneScanner, length int) (string, error) {
-	var builder bytes.Buffer
-
-	runesRead := 0
-loop:
-	for length == 0 || runesRead < length {
-		r := read(s)
-
-		switch r {
-		case eof:
-			break loop
-		case '\\':
-			escaped, err := readEscaped(s)
-			if err != nil {
-				return "", fmt.Errorf("incorrect escaping in string: %v", err)
-			}
-			r = escaped
-		case '\'':
-			s.UnreadRune()
-			break loop
-		}
-
-		builder.WriteRune(r)
-		runesRead++
-	}
-
-	if length != 0 && runesRead != length {
-		return "", fmt.Errorf("unexpected string length %d, expected %d", runesRead, length)
-	}
-
-	return builder.String(), nil
-}
-
-func readString(s io.RuneScanner, length int, unquote bool) (string, error) {
-	if unquote {
-		if r := read(s); r != '\'' {
-			return "", fmt.Errorf("unexpected character instead of a quote")
-		}
-	}
-
-	str, err := readUnquoted(s, length)
-	if err != nil {
-		return "", fmt.Errorf("failed to read string")
-	}
-
-	if unquote {
-		if r := read(s); r != '\'' {
-			return "", fmt.Errorf("unexpected character instead of a quote")
-		}
-	}
-
-	return str, nil
+type stringParser struct {
+	unquote bool
+	length  int
 }
 
 func (p *stringParser) Parse(s io.RuneScanner) (driver.Value, error) {
@@ -236,6 +230,12 @@ func (p *stringParser) Parse(s io.RuneScanner) (driver.Value, error) {
 
 func (p *stringParser) Type() reflect.Type {
 	return reflectTypeString
+}
+
+type dateTimeParser struct {
+	unquote  bool
+	format   string
+	location *time.Location
 }
 
 func (p *dateTimeParser) Parse(s io.RuneScanner) (driver.Value, error) {
@@ -549,7 +549,7 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		return &floatParser{32}, nil
 	case "Float64":
 		return &floatParser{64}, nil
-	case "Decimal", "String", "Enum8", "Enum16", "UUID":
+	case "Decimal", "String", "Enum8", "Enum16", "UUID", "IPv4", "IPv6":
 		return &stringParser{unquote: unquote}, nil
 	case "FixedString":
 		if len(t.Args) != 1 {
