@@ -47,6 +47,7 @@ It is recommended use type `UInt64` which is provided by driver for such kind of
 type `[]byte` are used as raw string (without quoting)
 for passing value of type `[]uint8` to driver as array - please use the wrapper `clickhouse.Array`
 for passing decimal value please use the wrappers `clickhouse.Decimal*`
+for passing IPv4/IPv6 types use `clickhouse.IP`
 
 ## Supported request params
 

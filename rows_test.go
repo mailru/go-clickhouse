@@ -131,3 +131,18 @@ func TestTextRowsWithEmptyLine(t *testing.T) {
 	}
 	assert.Equal(t, []driver.Value{int32(2), ""}, dest)
 }
+
+func TestTextRowsWithEmptyQuotes(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nString\n\"\"\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"String"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{`""`}, dest)
+}
