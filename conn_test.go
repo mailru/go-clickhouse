@@ -7,11 +7,11 @@ import (
 	"database/sql/driver"
 	"io/ioutil"
 	"net/http"
-	"net/url"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -180,10 +180,8 @@ func (s *connSuite) TestServerError() {
 
 func (s *connSuite) TestServerKillQuery() {
 	// kill query and check if it is cancelled
-	queryUUID, err := uuid.NewV4()
-	s.Require().NoError(err)
-	queryID := queryUUID.String()
-	_, err = s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(3)")
+	queryID := uuid.New().String()
+	_, err := s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(3)")
 	s.Error(err)
 	s.Contains(err.Error(), "net/http: timeout awaiting response headers")
 	rows := s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 1)
@@ -193,9 +191,7 @@ func (s *connSuite) TestServerKillQuery() {
 	s.Equal(1, amount)
 
 	// not kill query and check if it is not cancelled
-	queryUUID, err = uuid.NewV4()
-	s.Require().NoError(err)
-	queryID = queryUUID.String()
+	queryID = uuid.New().String()
 	_, err = s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(0.5)")
 	s.NoError(err)
 	rows = s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 0)
@@ -212,21 +208,24 @@ func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 	cfg.User = "user"
 	cfg.Password = "password"
 	cn := newConn(cfg)
-	req, err := cn.buildRequest(context.Background(), "SELECT 1", nil, true)
+	req, err := cn.buildRequest(context.Background(), "SELECT 1", nil)
 	if s.NoError(err) {
 		user, password, ok := req.BasicAuth()
 		s.True(ok)
 		s.Equal("user", user)
 		s.Equal("password", password)
-		s.Equal(http.MethodGet, req.Method)
-		s.Equal(cn.url.String()+"&query="+url.QueryEscape("SELECT 1"), req.URL.String())
+		s.Equal(http.MethodPost, req.Method)
+		s.Equal(cn.url.String(), req.URL.String())
 		s.Nil(req.URL.User)
+		b, err := ioutil.ReadAll(req.Body)
+		s.Require().NoError(err)
+		s.Equal("SELECT 1", string(b))
 	}
 }
 
 func (s *connSuite) TestBuildRequestReadWriteWOAuth() {
 	cn := newConn(NewConfig())
-	req, err := cn.buildRequest(context.Background(), "INSERT 1 INTO num", nil, false)
+	req, err := cn.buildRequest(context.Background(), "INSERT 1 INTO num", nil)
 	if s.NoError(err) {
 		_, _, ok := req.BasicAuth()
 		s.False(ok)
@@ -271,7 +270,7 @@ func (s *connSuite) TestBuildRequestWithQueryId() {
 		},
 	}
 	for _, tc := range testCases {
-		req, err := cn.buildRequest(context.WithValue(context.Background(), QueryID, tc.queryID), "INSERT 1 INTO num", nil, false)
+		req, err := cn.buildRequest(context.WithValue(context.Background(), QueryID, tc.queryID), "INSERT 1 INTO num", nil)
 		if s.NoError(err) {
 			s.Equal(http.MethodPost, req.Method)
 			s.Equal(tc.expected, req.URL.String())
@@ -314,7 +313,7 @@ func (s *connSuite) TestBuildRequestWithQuotaKey() {
 		},
 	}
 	for _, tc := range testCases {
-		req, err := cn.buildRequest(context.WithValue(context.Background(), QuotaKey, tc.quotaKey), "SELECT 1", nil, false)
+		req, err := cn.buildRequest(context.WithValue(context.Background(), QuotaKey, tc.quotaKey), "SELECT 1", nil)
 		if s.NoError(err) {
 			s.Equal(http.MethodPost, req.Method)
 			s.Equal(tc.expected, req.URL.String())
@@ -363,7 +362,7 @@ func (s *connSuite) TestBuildRequestWithQueryIdAndQuotaKey() {
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, QuotaKey, tc.quotaKey)
 		ctx = context.WithValue(ctx, QueryID, tc.queryID)
-		req, err := cn.buildRequest(ctx, "SELECT 1", nil, false)
+		req, err := cn.buildRequest(ctx, "SELECT 1", nil)
 		if s.NoError(err) {
 			s.Equal(http.MethodPost, req.Method)
 			s.Equal(tc.expected, req.URL.String())
@@ -373,7 +372,7 @@ func (s *connSuite) TestBuildRequestWithQueryIdAndQuotaKey() {
 func (s *connSuite) TestBuildRequestParamsInterpolation() {
 	query := `INSERT INTO test (str) VALUES ("Question?")`
 	cn := newConn(NewConfig())
-	req, err := cn.buildRequest(context.Background(), query, make([]driver.Value, 0), false)
+	req, err := cn.buildRequest(context.Background(), query, make([]driver.Value, 0))
 	if s.NoError(err) {
 		body, e := ioutil.ReadAll(req.Body)
 		if s.NoError(e) {
@@ -386,7 +385,7 @@ func (s *connSuite) TestRequestBodyGzipCompression() {
 	query := `INSERT INTO test (str) VALUES ("Question?")`
 	cn := newConn(NewConfig())
 	cn.useGzipCompression = true
-	req, err := cn.buildRequest(context.Background(), query, make([]driver.Value, 0), false)
+	req, err := cn.buildRequest(context.Background(), query, make([]driver.Value, 0))
 	if s.NoError(err) {
 		s.Contains(req.Header, "Content-Encoding")
 		gz, err := gzip.NewReader(req.Body)
@@ -396,6 +395,19 @@ func (s *connSuite) TestRequestBodyGzipCompression() {
 			if s.NoError(e) {
 				s.Equal(query, string(body))
 			}
+		}
+	}
+}
+
+func (s *connSuite) TestLongRequest() {
+	expected := strings.Repeat("x", 100000)
+	rows, err := s.conn.Query("SELECT ?", expected)
+	if s.NoError(err) {
+		rows.Next()
+		var actual string
+		err = rows.Scan(&actual)
+		if s.NoError(err) {
+			s.Equal(expected, actual)
 		}
 	}
 }
