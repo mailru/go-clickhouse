@@ -84,7 +84,7 @@ func (r *textRows) Next(dest []driver.Value) error {
 
 	// skip row before WITH TOTALS,
 	// not but do not skip an empty line if it is part of the result
-	if len(row) == 1 && row[0] == "" && (len(dest) != 1 || !strings.Contains(r.ColumnTypeDatabaseTypeName(0), "String")) {
+	if len(row) == 1 && row[0] == "" {
 		row, err = r.tsv.Read()
 		if err != nil {
 			return err
