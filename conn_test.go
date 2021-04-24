@@ -412,6 +412,33 @@ func (s *connSuite) TestLongRequest() {
 	}
 }
 
+func (s *connSuite) TestFixedString() {
+	expected := "foo"
+	rows, err := s.conn.Query("SELECT toFixedString(?, 8) AS s", expected)
+	if s.NoError(err) {
+		rows.Next()
+		var actual string
+		err = rows.Scan(&actual)
+		if s.NoError(err) {
+			s.Equal(expected, actual)
+		}
+	}
+}
+
+func (s *connSuite) TestEmptyString() {
+	rows, err := s.conn.Query("SELECT number, '' FROM numbers(0,10)")
+	if s.NoError(err) {
+		for rows.Next() {
+			var x int
+			var actual string
+			err = rows.Scan(&x, &actual)
+			if s.NoError(err) {
+				s.Equal("", actual)
+			}
+		}
+	}
+}
+
 func TestConn(t *testing.T) {
 	suite.Run(t, new(connSuite))
 }

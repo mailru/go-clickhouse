@@ -7,6 +7,7 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -48,7 +49,7 @@ loop:
 }
 
 func readUnquoted(s io.RuneScanner, length int) (string, error) {
-	var builder bytes.Buffer
+	var builder strings.Builder
 
 	runesRead := 0
 loop:

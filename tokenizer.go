@@ -65,7 +65,6 @@ func readRaw(s io.RuneScanner) *bytes.Buffer {
 
 	for {
 		r := read(s)
-
 		if r == eof {
 			break
 		}
