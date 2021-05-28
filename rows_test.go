@@ -83,21 +83,6 @@ func TestTextRowsNewLine(t *testing.T) {
 	assert.Equal(t, []driver.Value{"Hello\nThere"}, dest)
 }
 
-func TestTextRowsEmpty(t *testing.T) {
-	buf := bytes.NewReader([]byte("text\nString\n\n"))
-	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
-	if !assert.NoError(t, err) {
-		return
-	}
-	assert.Equal(t, []string{"text"}, rows.Columns())
-	assert.Equal(t, []string{"String"}, rows.types)
-	dest := make([]driver.Value, 1)
-	if !assert.NoError(t, rows.Next(dest)) {
-		return
-	}
-	assert.Equal(t, []driver.Value{""}, dest)
-}
-
 func TestTextRowsWithStartsDoubleQuotes(t *testing.T) {
 	buf := bytes.NewReader([]byte("text\nString\n\"\n"))
 	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
@@ -145,4 +130,34 @@ func TestTextRowsWithEmptyQuotes(t *testing.T) {
 		return
 	}
 	assert.Equal(t, []driver.Value{`""`}, dest)
+}
+
+func TestInt32RowsEmpty(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nInt64\n\n1\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"Int64"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{int64(1)}, dest)
+}
+
+func TestFloat64RowsEmpty(t *testing.T) {
+	buf := bytes.NewReader([]byte("text\nFloat64\n\n1.0\n"))
+	rows, err := newTextRows(&conn{}, &bufReadCloser{buf}, time.Local, false)
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []string{"text"}, rows.Columns())
+	assert.Equal(t, []string{"Float64"}, rows.types)
+	dest := make([]driver.Value, 1)
+	if !assert.NoError(t, rows.Next(dest)) {
+		return
+	}
+	assert.Equal(t, []driver.Value{float64(1)}, dest)
 }
