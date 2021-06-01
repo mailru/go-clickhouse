@@ -1,4 +1,4 @@
-module github.com/mailru/go-clickhouse
+module github.com/finnan444/go-clickhouse
 
 require (
 	github.com/google/uuid v1.2.0
