@@ -184,7 +184,10 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		for {
 			r, _, err := s.ReadRune()
 			if err != nil {
-				return nil, nil
+				if err != io.EOF {
+					return nil, fmt.Errorf("unexpected error on ReadRune: %v", err)
+				}
+				break
 			}
 
 			runes += string(r)
