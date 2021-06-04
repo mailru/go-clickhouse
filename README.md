@@ -5,8 +5,10 @@ Yet another Golang SQL database driver for [Yandex ClickHouse](https://clickhous
 ## Key features
 
 * Uses official http interface
+* Compatibility with database/sql
 * Compatibility with [dbr](https://github.com/mailru/dbr)
 * Compatibility with [chproxy](https://github.com/Vertamedia/chproxy)
+* Compatibility with [clickhouse-bulk](https://github.com/nikepan/clickhouse-bulk)
 
 ## DSN
 ```
