@@ -439,6 +439,19 @@ func (s *connSuite) TestEmptyString() {
 	}
 }
 
+func (s *connSuite) TestEmptyLineString() {
+	rows, err := s.conn.Query("SELECT '' as x FROM numbers(0,10)")
+	if s.NoError(err) {
+		for rows.Next() {
+			var actual string
+			err = rows.Scan(&actual)
+			if s.NoError(err) {
+				s.Equal("", actual)
+			}
+		}
+	}
+}
+
 func TestConn(t *testing.T) {
 	suite.Run(t, new(connSuite))
 }
