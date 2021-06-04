@@ -477,6 +477,24 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			output:    nil,
 		},
 		{
+			name:      "nullable null date",
+			inputtype: "Nullable(Date)",
+			inputdata: `\N`,
+			output:    nil,
+		},
+		{
+			name:      "nullable not null datetime",
+			inputtype: "Nullable(DateTime)",
+			inputdata: "2018-01-02 12:34:56",
+			output:    time.Date(2018, 1, 2, 12, 34, 56, 0, time.UTC),
+		},
+		{
+			name:      "nullable not null date",
+			inputtype: "Nullable(Date)",
+			inputdata: "2018-01-02",
+			output:    time.Date(2018, 1, 2, 0, 0, 0, 0, time.UTC),
+		},
+		{
 			name:      "nullable null enum",
 			inputtype: "Nullable(Enum8('hello' = 1, 'world' = 2))",
 			inputdata: `\N`,
