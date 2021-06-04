@@ -11,6 +11,7 @@ services:
   - docker
 
 before_install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - travis_retry docker pull yandex/clickhouse-server:20.3.8.53
   - make up_docker_server
 
