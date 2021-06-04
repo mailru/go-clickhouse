@@ -183,7 +183,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	rows, err := connect.QueryContext(context.WithValue(ctx, clickhouse.QueryID, "dummy-query-id"), `
+	rows, err = connect.QueryContext(context.WithValue(ctx, clickhouse.QueryID, "dummy-query-id"), `
 		SELECT
 			country_code,
 			os_id,
