@@ -12,7 +12,7 @@ services:
 
 before_install:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - travis_retry docker pull yandex/clickhouse-server:20.3.8.53
+  - travis_retry docker pull yandex/clickhouse-server:latest
   - make up_docker_server
 
 install:
@@ -20,7 +20,7 @@ install:
   - make init
 
 before_script:
-  - export COVERALLS_SERVICE_JOB_ID=$(TRAVIS_JOB_ID)
+  - export COVERALLS_SERVICE_JOB_ID=$TRAVIS_JOB_ID
   - export TEST_CLICKHOUSE_DSN="http://localhost:8123/default"
 
 script:
