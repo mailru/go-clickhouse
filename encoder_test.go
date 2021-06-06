@@ -7,6 +7,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type TestEmbedTuple struct {
+	C       bool
+	private int
+}
+
+type TestTuple struct {
+	A int
+	B string
+	TestEmbedTuple
+}
+
+type TestNestedTuple struct {
+	A *TestTuple
+	D int
+}
+
 func TestTextEncoder(t *testing.T) {
 	dt := time.Date(2011, 3, 6, 6, 20, 0, 0, time.UTC)
 	d := time.Date(2012, 5, 31, 0, 0, 0, 0, time.UTC)
@@ -40,6 +56,9 @@ func TestTextEncoder(t *testing.T) {
 		{[][]int16{{1}}, "[[1]]"},
 		{[]int16(nil), "[]"},
 		{(*int16)(nil), "NULL"},
+		{Tuple(TestTuple{A: 1, B: "2", TestEmbedTuple: TestEmbedTuple{C: true, private: 5}}), "(1,'2',1)"},
+		{Tuple(TestNestedTuple{A: &TestTuple{A: 1, B: "2", TestEmbedTuple: TestEmbedTuple{C: true}}, D: 4}), "((1,'2',1),4)"},
+		{[]TestTuple{{A: 1, B: "2", TestEmbedTuple: TestEmbedTuple{C: true, private: 5}}}, "[(1,'2',1)]"},
 	}
 
 	enc := new(textEncoder)
