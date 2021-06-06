@@ -114,7 +114,7 @@ func (e *textEncoder) encodeArray(value reflect.Value) ([]byte, error) {
 	return append(res, ']'), nil
 }
 
-// EncodeArray encodes a go slice or array as Clickhouse Array
+// EncodeTuple encodes a go struct as Clickhouse Tuple
 func (e *textEncoder) encodeTuple(value reflect.Value) ([]byte, error) {
 	res := make([]byte, 0)
 	res = append(res, '(')
