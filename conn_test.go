@@ -17,8 +17,8 @@ import (
 
 var (
 	_ driver.Conn    = new(conn)
-	_ driver.Execer  = new(conn)
-	_ driver.Queryer = new(conn)
+	_ driver.Execer  = new(conn) // nolint:staticcheck
+	_ driver.Queryer = new(conn) // nolint:staticcheck
 	_ driver.Tx      = new(conn)
 )
 

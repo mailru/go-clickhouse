@@ -25,7 +25,7 @@ func skipWhiteSpace(s io.RuneScanner) {
 		case eof:
 			return
 		}
-		s.UnreadRune()
+		_ = s.UnreadRune()
 		return
 	}
 }
@@ -113,7 +113,7 @@ loop:
 		case eof, ' ', '\t', '\n':
 			break loop
 		case '(', ')', ',':
-			s.UnreadRune()
+			_ = s.UnreadRune()
 			break loop
 		default:
 			data.WriteRune(r)
@@ -149,7 +149,7 @@ loop:
 				return nil, err
 			}
 		default:
-			s.UnreadRune()
+			_ = s.UnreadRune()
 			t = readNumberOrID(s)
 		}
 
