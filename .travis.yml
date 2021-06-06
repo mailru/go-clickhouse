@@ -20,6 +20,7 @@ install:
   - make init
 
 before_script:
+  - export COVERALLS_SERVICE_JOB_ID=$(TRAVIS_JOB_ID)
   - export TEST_CLICKHOUSE_DSN="http://localhost:8123/default"
 
 script:
