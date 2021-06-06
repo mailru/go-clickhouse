@@ -17,8 +17,8 @@ import (
 
 var (
 	_ driver.Conn    = new(conn)
-	_ driver.Execer  = new(conn)
-	_ driver.Queryer = new(conn)
+	_ driver.Execer  = new(conn) // nolint:staticcheck
+	_ driver.Queryer = new(conn) // nolint:staticcheck
 	_ driver.Tx      = new(conn)
 )
 
@@ -192,9 +192,9 @@ func (s *connSuite) TestServerKillQuery() {
 
 	// not kill query and check if it is not cancelled
 	queryID = uuid.New().String()
-	_, err = s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(0.5)")
+	_, err = s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(0.1)")
 	s.NoError(err)
-	rows = s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 0)
+	rows = s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 1)
 	err = rows.Scan(&amount)
 	s.NoError(err)
 	s.Equal(0, amount)

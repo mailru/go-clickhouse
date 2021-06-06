@@ -27,8 +27,12 @@ func (e *textEncoder) Encode(value driver.Value) ([]byte, error) {
 	switch v := value.(type) {
 	case array:
 		return e.encodeArray(reflect.ValueOf(v.v))
+	case tuple:
+		return e.encodeTuple(reflect.ValueOf(v.v))
 	case []byte:
 		return v, nil
+	case time.Time:
+		return []byte(e.encode(v)), nil
 	}
 
 	vv := reflect.ValueOf(value)
@@ -40,6 +44,8 @@ func (e *textEncoder) Encode(value driver.Value) ([]byte, error) {
 		return e.Encode(vv.Elem().Interface())
 	case reflect.Slice, reflect.Array:
 		return e.encodeArray(vv)
+	case reflect.Struct:
+		return e.encodeTuple(vv)
 	}
 	return []byte(e.encode(value)), nil
 }
@@ -106,4 +112,55 @@ func (e *textEncoder) encodeArray(value reflect.Value) ([]byte, error) {
 		res = append(res, tmp...)
 	}
 	return append(res, ']'), nil
+}
+
+// EncodeTuple encodes a go struct as Clickhouse Tuple
+func (e *textEncoder) encodeTuple(value reflect.Value) ([]byte, error) {
+	res := make([]byte, 0)
+	res = append(res, '(')
+	b, err := e.encodeTuplePart(value)
+	if err != nil {
+		return nil, err
+	}
+	res = append(res, b...)
+	res = append(res, ')')
+	return res, nil
+}
+
+func (e *textEncoder) encodeTuplePart(value reflect.Value) ([]byte, error) {
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+	}
+	if value.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("expected struct, got %s", value.Kind())
+	}
+	t := value.Type()
+	res := []byte{}
+	for i := 0; i < value.NumField(); i++ {
+		ft := t.Field(i)
+		fv := value.Field(i)
+		if ft.Anonymous {
+			b, err := e.encodeTuplePart(fv)
+			if err != nil {
+				return nil, err
+			}
+			if i > 0 {
+				res = append(res, ',')
+			}
+			res = append(res, b...)
+			continue
+		}
+		if !fv.CanInterface() {
+			continue
+		}
+		b, err := e.Encode(fv.Interface())
+		if err != nil {
+			return nil, err
+		}
+		if i > 0 {
+			res = append(res, ',')
+		}
+		res = append(res, b...)
+	}
+	return res, nil
 }

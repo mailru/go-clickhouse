@@ -37,7 +37,7 @@ loop:
 		case eof:
 			break loop
 		case ',', ']', ')':
-			s.UnreadRune()
+			_ = s.UnreadRune()
 			break loop
 		}
 
@@ -65,7 +65,7 @@ loop:
 			}
 			r = escaped
 		case '\'':
-			s.UnreadRune()
+			_ = s.UnreadRune()
 			break loop
 		}
 
@@ -141,7 +141,7 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 			}
 
 			if r != '\'' && iter == 0 {
-				s.UnreadRune()
+				_ = s.UnreadRune()
 				d := readRaw(s)
 				dB = d
 				isNotString = true
@@ -319,7 +319,7 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	slice := reflect.MakeSlice(p.Type(), 0, 0)
 	for i := 0; ; i++ {
 		r := read(s)
-		s.UnreadRune()
+		_ = s.UnreadRune()
 		if r == ']' {
 			break
 		}
@@ -340,7 +340,7 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 
 		r = read(s)
 		if r != ',' {
-			s.UnreadRune()
+			_ = s.UnreadRune()
 		}
 	}
 

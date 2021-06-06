@@ -43,6 +43,7 @@ http://user:password@host:8123/clicks?read_timeout=10&write_timeout=20
 * [Array(T) (one-dimensional)](https://clickhouse.yandex/reference_en.html#Array(T))
 * [Nested(Name1 Type1, Name2 Type2, ...)](https://clickhouse.yandex/docs/en/data_types/nested_data_structures/nested/)
 * IPv4, IPv6
+* Tuple
 
 Notes:
 * database/sql does not allow to use big uint64 values. It is recommended use type `UInt64` which is provided by driver for such kind of values.
@@ -50,6 +51,7 @@ Notes:
 * for passing value of type `[]uint8` to driver as array - please use the wrapper `clickhouse.Array`
 * for passing decimal value please use the wrappers `clickhouse.Decimal*`
 * for passing IPv4/IPv6 types use `clickhouse.IP`
+* for passing Tuple types use `clickhouse.Tuple` or structs
 
 ## Supported request params
 
