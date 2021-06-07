@@ -5,9 +5,13 @@ package clickhouse
 import (
 	"context"
 	"database/sql/driver"
+	"fmt"
 	"io/ioutil"
 	"strings"
 )
+
+// pingExpectedPrefix represents expected answer for "SELECT 1" query
+const pingExpectedPrefix = "1"
 
 // Ping implements the driver.Pinger
 func (c *conn) Ping(ctx context.Context) error {
@@ -30,9 +34,14 @@ func (c *conn) Ping(ctx context.Context) error {
 
 	// Close response body to enable connection reuse
 	defer respBody.Close()
+
+	// drain the response body to check if we got expected `1`
 	resp, err := ioutil.ReadAll(respBody)
-	if err != nil || !strings.HasPrefix(string(resp), "1") {
-		return driver.ErrBadConn
+	if err != nil {
+		return fmt.Errorf("ping: failed to read the response: %w", err)
+	}
+	if !strings.HasPrefix(string(resp), pingExpectedPrefix) {
+		return fmt.Errorf("ping: failed to get expected result (1), got '%s' instead", string(resp))
 	}
 	return nil
 }

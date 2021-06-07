@@ -272,15 +272,17 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 	resp, err := transport.RoundTrip(req)
 	if err != nil {
 		c.cancel = nil
-		return nil, err
+		return nil, fmt.Errorf("doRequest: transport failed to send a request to ClickHouse: %w", err)
 	}
 	if resp.StatusCode != 200 {
 		msg, err := readResponse(resp)
 		c.cancel = nil
-		if err == nil {
-			err = newError(string(msg))
+		if err != nil {
+			return nil, fmt.Errorf("doRequest: failed to read the response with the status code %d: %w", resp.StatusCode, err)
 		}
-		return nil, err
+		// we got non-200 response, which means ClickHouse send an error in the
+		// response
+		return nil, newError(string(msg))
 	}
 	return resp.Body, nil
 }
@@ -289,7 +291,7 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 	var err error
 	if len(params) > 0 {
 		if query, err = interpolateParams(query, params); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("buildRequest: failed to interpolate params: %w", err)
 		}
 	}
 
@@ -309,7 +311,7 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 
 	req, err := http.NewRequest(http.MethodPost, c.url.String(), bodyReader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("buildRequest: failed to create a request: %w", err)
 	}
 
 	// http.Transport ignores url.User argument, handle it here

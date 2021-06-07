@@ -20,14 +20,14 @@ func (s *connSuite) TestQueryContext() {
 	ctx, cancel := context.WithCancel(context.Background())
 	time.AfterFunc(5*time.Millisecond, cancel)
 	_, err := s.conn.QueryContext(ctx, "SELECT sleep(3)")
-	s.EqualError(err, "context canceled")
+	s.EqualError(err, "doRequest: transport failed to send a request to ClickHouse: context canceled")
 }
 
 func (s *connSuite) TestExecContext() {
 	ctx, cancel := context.WithCancel(context.Background())
 	time.AfterFunc(5*time.Millisecond, cancel)
 	_, err := s.conn.ExecContext(ctx, "SELECT sleep(3)")
-	s.EqualError(err, "context canceled")
+	s.EqualError(err, "doRequest: transport failed to send a request to ClickHouse: context canceled")
 }
 
 func (s *connSuite) TestPing() {
