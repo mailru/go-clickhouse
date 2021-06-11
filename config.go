@@ -43,7 +43,7 @@ func NewConfig() *Config {
 // FormatDSN formats the given Config into a DSN string which can be passed to
 // the driver.
 func (cfg *Config) FormatDSN() string {
-	u := cfg.url(nil, true)
+	u := cfg.getURL(nil, true)
 	query := u.Query()
 	if cfg.Timeout != 0 {
 		query.Set("timeout", cfg.Timeout.String())
@@ -77,7 +77,7 @@ func (cfg *Config) FormatDSN() string {
 	return u.String()
 }
 
-func (cfg *Config) url(extra map[string]string, dsn bool) *url.URL {
+func (cfg *Config) getURL(extra map[string]string, dsn bool) *url.URL {
 	u := &url.URL{
 		Host:   ensureHavePort(cfg.Host),
 		Scheme: cfg.Scheme,
@@ -175,7 +175,7 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 		}
 	}
 
-	return
+	return nil
 }
 
 func ensureHavePort(addr string) string {

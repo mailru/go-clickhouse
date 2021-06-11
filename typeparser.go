@@ -12,12 +12,14 @@ type TypeDesc struct {
 
 func parseTypeDesc(tokens []*token) (*TypeDesc, []*token, error) {
 	var name string
-	if tokens[0].kind == 's' || tokens[0].kind == 'q' {
-		name = tokens[0].data
-		tokens = tokens[1:]
-	} else {
-		return nil, nil, fmt.Errorf("failed to parse type name: wrong token type '%c'", tokens[0].kind)
+
+	tokenKind := tokens[0].kind
+	if tokenKind != 's' && tokenKind != 'q' {
+		return nil, nil, fmt.Errorf("failed to parse type name: wrong token kind '%c'", tokenKind)
 	}
+
+	name = tokens[0].data
+	tokens = tokens[1:]
 
 	desc := TypeDesc{Name: name}
 	if tokens[0].kind != '(' {

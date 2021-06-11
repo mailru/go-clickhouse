@@ -46,8 +46,9 @@ func (e *textEncoder) Encode(value driver.Value) ([]byte, error) {
 		return e.encodeArray(vv)
 	case reflect.Struct:
 		return e.encodeTuple(vv)
+	default:
+		return []byte(e.encode(value)), nil
 	}
-	return []byte(e.encode(value)), nil
 }
 
 func (e *textEncoder) encode(value driver.Value) string {

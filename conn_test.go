@@ -184,9 +184,9 @@ func (s *connSuite) TestServerKillQuery() {
 	_, err := s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(3)")
 	s.Error(err)
 	s.Contains(err.Error(), "net/http: timeout awaiting response headers")
-	rows := s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 1)
+	row := s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 1)
 	var amount int
-	err = rows.Scan(&amount)
+	err = row.Scan(&amount)
 	s.NoError(err)
 	s.Equal(1, amount)
 
@@ -194,8 +194,8 @@ func (s *connSuite) TestServerKillQuery() {
 	queryID = uuid.New().String()
 	_, err = s.connWithKillQuery.QueryContext(context.WithValue(context.Background(), QueryID, queryID), "SELECT sleep(0.1)")
 	s.NoError(err)
-	rows = s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 1)
-	err = rows.Scan(&amount)
+	row = s.connWithKillQuery.QueryRow("SELECT count(query_id) FROM system.processes where query_id=? and is_cancelled=?", queryID, 1)
+	err = row.Scan(&amount)
 	s.NoError(err)
 	s.Equal(0, amount)
 

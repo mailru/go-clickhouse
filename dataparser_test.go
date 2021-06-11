@@ -566,7 +566,7 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			inputdata: "[123,555]",
 			output:    []uint64{123, 555},
 		},
-		//////////////////////////////////////////////////////
+		//-----------------------------------------------
 		{
 			name:      "array(nullable(datetime)), without options and argument",
 			inputtype: "Array(Nullable(DateTime))",
@@ -669,7 +669,7 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			},
 			failParseData: true,
 		},
-		////////////////////////////////////////////////////
+		//-----------------------------------------------
 		{
 			name:      "array of dates",
 			inputtype: "Array(Date)",
@@ -707,7 +707,7 @@ func TestParseDataNewNullableArray(t *testing.T) {
 				{},
 			},
 		},
-		//////////////////////////////////////////////////
+		//-----------------------------------------------
 		{
 			name:      "array of ints",
 			inputtype: "Array(UInt64)",
@@ -733,7 +733,7 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			output:        []uint64{},
 			failParseData: true,
 		},
-		//////////////////////////////////////////////////
+		//-----------------------------------------------
 		{
 			name:      "array of strings",
 			inputtype: "Array(String)",
