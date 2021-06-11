@@ -33,7 +33,7 @@ func (e *Error) Error() string {
 
 func newError(resp string) error {
 	tokens := errorRe.FindStringSubmatch(resp)
-	if len(tokens) < 3 {
+	if len(tokens) < 3 { //nolint: gomnd
 		return fmt.Errorf("clickhouse: %s", resp)
 	}
 	code, _ := strconv.ParseInt(tokens[1], 10, 64)

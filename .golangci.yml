@@ -26,10 +26,10 @@ linters:
     - asciicheck
     - gofmt
 #    - gofumpt
-#    - goimports
+    - goimports
 #    - goheader
     - gci
-#    - maligned
+#    - maligned #deprecated
     - depguard
     - misspell
 #    - lll
@@ -45,7 +45,7 @@ linters:
     - whitespace
 #    - wsl
     - goprintffuncname
-#    - gomnd
+    - gomnd
 #    - goerr113
 #    - gomodguard
 #    - godot
@@ -69,7 +69,7 @@ linters:
     - tagliatelle
 #    - promlinter
 #    - paralleltest
-#    - tparallel
+    - tparallel
 #    - nlreturn
     - nolintlint
 
@@ -211,6 +211,14 @@ linters-settings:
     # 'default' case is present, even if all enum members aren't listed in the
     # switch
     default-signifies-exhaustive: true
+  gomnd:
+    settings:
+      mnd:
+        # the list of enabled checks, see https://github.com/tommy-muehle/go-mnd/#checks for description.
+        checks: [argument,condition,operation,return,assign]
+        # ignored-numbers: 1000
+        # ignored-files: magic_.*.go
+        # ignored-functions: math.*
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source

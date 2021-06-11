@@ -275,7 +275,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		c.cancel = nil
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		msg, err := readResponse(resp)
 		c.cancel = nil
 		if err == nil {
