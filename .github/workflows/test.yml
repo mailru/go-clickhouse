@@ -1,0 +1,48 @@
+name: Test
+
+on:
+  push:
+    branches: 
+      - master
+  pull_request:
+    branches: 
+      - master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.35.2
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TEST_CLICKHOUSE_DSN: http://localhost:8123/default
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.13', '1.14', '1.15', '1.16']
+
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+      - uses: actions/checkout@v2
+      - run: go test -v -coverprofile=profile.cov ./...
+
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: profile.cov
+          flag-name: Go-${{ matrix.go }}
+          parallel: true
+
+    services:
+      clickhouse:
+        image: yandex/clickhouse-server:latest
+        ports:
+          - 8123:8123

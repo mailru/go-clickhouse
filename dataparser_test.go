@@ -765,7 +765,6 @@ func TestParseDataNewNullableArray(t *testing.T) {
 			if !assert.NoError(tt, err) {
 				return
 			}
-			t.Log(desc.Name, desc.Args)
 
 			parser, err := newDataParser(desc, false, tc.inputopt)
 			if tc.failNewParser {
@@ -776,7 +775,6 @@ func TestParseDataNewNullableArray(t *testing.T) {
 				return
 			}
 
-			t.Log(parser.Type(), tc.inputdata)
 			output, err := parser.Parse(strings.NewReader(tc.inputdata))
 			if tc.failParseData {
 				assert.Error(tt, err)
