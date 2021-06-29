@@ -1,4 +1,4 @@
-# ClickHouse [![Build Status](https://travis-ci.org/mailru/go-clickhouse.svg?branch=master)](https://travis-ci.org/mailru/go-clickhouse) [![Go Report Card](https://goreportcard.com/badge/github.com/mailru/go-clickhouse)](https://goreportcard.com/report/github.com/mailru/go-clickhouse) [![Coverage Status](https://coveralls.io/repos/github/mailru/go-clickhouse/badge.svg?branch=master)](https://coveralls.io/github/mailru/go-clickhouse?branch=master)
+# ClickHouse [![Build Status](https://github.com/mailru/go-clickhouse/actions/workflows/test.yml/badge.svg)](https://github.com/mailru/go-clickhouse/actions/workflows/test.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/mailru/go-clickhouse)](https://goreportcard.com/report/github.com/mailru/go-clickhouse) [![Coverage Status](https://coveralls.io/repos/github/mailru/go-clickhouse/badge.svg?branch=master)](https://coveralls.io/github/mailru/go-clickhouse?branch=master)
 
 Yet another Golang SQL database driver for [Yandex ClickHouse](https://clickhouse.yandex/)
 
@@ -271,7 +271,7 @@ Officially support last 3 golang releases
 
 
 ## Development
-You can check the effect of changes on Travis CI or run tests locally:
+You can check the effect of changes on CI or run tests locally:
 
 ``` bash
 make init # dep ensure and install
