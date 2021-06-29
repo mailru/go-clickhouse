@@ -18,17 +18,17 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 
 	columns, err := tsvReader.Read()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("newTextRows: failed to parse the list of columns: %w", err)
 	}
 
 	types, err := tsvReader.Read()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("newTextRows: failed to parse the list of column types: %w", err)
 	}
 	for i := range types {
 		types[i], err = readUnquoted(strings.NewReader(types[i]), 0)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("newTextRows: failed to read the type '%s': %w", types[i], err)
 		}
 	}
 
@@ -36,7 +36,7 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 	for i, typ := range types {
 		desc, err := ParseTypeDesc(typ)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("newTextRows: failed to parse a description of the type '%s': %w", typ, err)
 		}
 
 		parsers[i], err = NewDataParser(desc, &DataParserOptions{
@@ -44,7 +44,7 @@ func newTextRows(c *conn, body io.ReadCloser, location *time.Location, useDBLoca
 			UseDBLocation: useDBLocation,
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("newTextRows: failed to create a data parser for the type '%s': %w", typ, err)
 		}
 	}
 
