@@ -26,7 +26,7 @@ var (
 	reflectTypeFloat64     = reflect.TypeOf(float64(0))
 )
 
-func readNumber(s io.RuneScanner) (string, error) {
+func readNumber(s io.RuneScanner) string {
 	var builder bytes.Buffer
 
 loop:
@@ -44,7 +44,7 @@ loop:
 		builder.WriteRune(r)
 	}
 
-	return builder.String(), nil
+	return builder.String()
 }
 
 func readUnquoted(s io.RuneScanner, length int) (string, error) {
@@ -123,10 +123,7 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	case reflectTypeInt8, reflectTypeInt16, reflectTypeInt32, reflectTypeInt64,
 		reflectTypeUInt8, reflectTypeUInt16, reflectTypeUInt32, reflectTypeUInt64,
 		reflectTypeFloat32, reflectTypeFloat64:
-		d, err := readNumber(s)
-		if err != nil {
-			return nil, fmt.Errorf("error: %v", err)
-		}
+		d := readNumber(s)
 
 		dB = bytes.NewBufferString(d)
 	case reflectTypeString:
@@ -331,7 +328,7 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 
 		if v == nil {
 			if reflect.TypeOf(p.arg) != reflect.TypeOf(&nullableParser{}) {
-				//need check if v is nil: panic otherwise
+				// need check if v is nil: panic otherwise
 				return nil, fmt.Errorf("unexpected nil element")
 			}
 		} else {
@@ -382,10 +379,7 @@ type floatParser struct {
 }
 
 func (p *intParser) Parse(s io.RuneScanner) (driver.Value, error) {
-	repr, err := readNumber(s)
-	if err != nil {
-		return nil, err
-	}
+	repr := readNumber(s)
 
 	if p.signed {
 		v, err := strconv.ParseInt(repr, 10, p.bitSize)
@@ -397,7 +391,7 @@ func (p *intParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		case 32:
 			return int32(v), err
 		case 64:
-			return int64(v), err
+			return v, err
 		default:
 			panic("unsupported bit size")
 		}
@@ -411,7 +405,7 @@ func (p *intParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		case 32:
 			return uint32(v), err
 		case 64:
-			return uint64(v), err
+			return v, err
 		default:
 			panic("unsupported bit size")
 		}
@@ -449,17 +443,14 @@ func (p *intParser) Type() reflect.Type {
 }
 
 func (p *floatParser) Parse(s io.RuneScanner) (driver.Value, error) {
-	repr, err := readNumber(s)
-	if err != nil {
-		return nil, err
-	}
+	repr := readNumber(s)
 
 	v, err := strconv.ParseFloat(repr, p.bitSize)
 	switch p.bitSize {
 	case 32:
 		return float32(v), err
 	case 64:
-		return float64(v), err
+		return v, err
 	default:
 		panic("unsupported bit size")
 	}
@@ -507,7 +498,7 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		return &nothingParser{}, nil
 	case "Nullable":
 		if len(t.Args) == 0 {
-			return nil, fmt.Errorf("Nullable should pass original type")
+			return nil, fmt.Errorf("nullable should pass original type")
 		}
 		p, err := newDataParser(t.Args[0], unquote, opt)
 		if err != nil {

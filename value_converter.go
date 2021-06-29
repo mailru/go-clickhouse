@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func (stmt *stmt) ColumnConverter(idx int) driver.ValueConverter {
+func (s *stmt) ColumnConverter(idx int) driver.ValueConverter {
 	return converter{}
 }
 
@@ -40,7 +40,7 @@ func (c converter) ConvertValue(v interface{}) (driver.Value, error) {
 			return bytes, nil
 		}
 		return u64, nil
+	default:
+		return driver.DefaultParameterConverter.ConvertValue(v)
 	}
-
-	return driver.DefaultParameterConverter.ConvertValue(v)
 }

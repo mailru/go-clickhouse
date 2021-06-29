@@ -87,9 +87,9 @@ func TestConfigURL(t *testing.T) {
 		"&write_timeout=4s&location=Local&max_execution_time=10"
 	cfg, err := ParseDSN(dsn)
 	if assert.NoError(t, err) {
-		u1 := cfg.url(nil, true).String()
+		u1 := cfg.getURL(nil, true).String()
 		assert.Equal(t, "http://username:password@localhost:8123/test?max_execution_time=10", u1)
-		u2 := cfg.url(map[string]string{"default_format": "Native"}, false).String()
+		u2 := cfg.getURL(map[string]string{"default_format": "Native"}, false).String()
 		assert.Contains(t, u2, "http://username:password@localhost:8123/?")
 		assert.Contains(t, u2, "default_format=Native")
 		assert.Contains(t, u2, "database=test")
@@ -111,7 +111,7 @@ func TestDefaultPort(t *testing.T) {
 	for _, tc := range testCases {
 		cfg, err = ParseDSN(tc.in)
 		if assert.NoError(t, err) {
-			assert.Equal(t, tc.out, cfg.url(nil, true).String())
+			assert.Equal(t, tc.out, cfg.getURL(nil, true).String())
 		}
 	}
 }

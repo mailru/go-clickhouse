@@ -109,7 +109,6 @@ func (s *stmtSuite) TestExec() {
 		_, err = st.Exec(tc.args[0]...)
 		s.EqualError(err, "sql: statement is closed")
 	}
-
 }
 
 func (s *stmtSuite) TestExecMulti() {

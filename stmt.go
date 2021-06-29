@@ -26,7 +26,7 @@ type stmt struct {
 func newStmt(query string) *stmt {
 	s := &stmt{pattern: query}
 	index := splitInsertRe.FindStringSubmatchIndex(strings.ToUpper(query))
-	if len(index) == 6 {
+	if len(index) == 6 { //nolint: gomnd
 		s.prefix = query[index[2]:index[3]]
 		s.pattern = query[index[4]:index[5]]
 		s.batchMode = true

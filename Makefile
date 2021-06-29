@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 init:
 	GO111MODULE=on go mod vendor
-	GO111MODULE=on go get github.com/golangci/golangci-lint/...@v1.35.2
+	GO111MODULE=on go get github.com/golangci/golangci-lint/...@v1.40.1
 
 up_docker_server: stop_docker_server
 	docker run --rm=true -p 8123:8123 --name dbr-clickhouse-server -d yandex/clickhouse-server:latest;

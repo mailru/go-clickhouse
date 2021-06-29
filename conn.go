@@ -37,7 +37,7 @@ var (
 	errEmptyQueryID = errors.New("query id is empty")
 )
 
-var defaultKillQueryTimeout = time.Duration(time.Second)
+var defaultKillQueryTimeout = time.Second
 
 // conn implements an interface sql.Conn
 type conn struct {
@@ -62,7 +62,7 @@ func newConn(cfg *Config) *conn {
 		logger = log.New(os.Stderr, "clickhouse: ", log.LstdFlags)
 	}
 	c := &conn{
-		url:                cfg.url(map[string]string{"default_format": "TabSeparatedWithNamesAndTypes"}, false),
+		url:                cfg.getURL(map[string]string{"default_format": "TabSeparatedWithNamesAndTypes"}, false),
 		location:           cfg.Location,
 		useDBLocation:      cfg.UseDBLocation,
 		useGzipCompression: cfg.GzipCompression,
@@ -88,6 +88,7 @@ func newConn(cfg *Config) *conn {
 	return c
 }
 
+//nolint:revive
 func (c *conn) log(msg ...interface{}) {
 	if c.logger != nil {
 		c.logger.Println(msg...)
@@ -274,7 +275,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		c.cancel = nil
 		return nil, fmt.Errorf("doRequest: transport failed to send a request to ClickHouse: %w", err)
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		msg, err := readResponse(resp)
 		c.cancel = nil
 		if err != nil {
@@ -309,7 +310,7 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 	}()
 	c.log("query: ", query)
 
-	req, err := http.NewRequest(http.MethodPost, c.url.String(), bodyReader)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.url.String(), bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("buildRequest: failed to create a request: %w", err)
 	}
@@ -339,7 +340,6 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 			}
 			reqQuery.Add(queryIDParamName, queryID)
 		}
-
 	}
 	if reqQuery != nil {
 		req.URL.RawQuery = reqQuery.Encode()
