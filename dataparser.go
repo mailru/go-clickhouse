@@ -364,6 +364,18 @@ func (p *lowCardinalityParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	return p.arg.Parse(s)
 }
 
+type simpleAggregateFunctionParser struct {
+	arg DataParser
+}
+
+func (p *simpleAggregateFunctionParser) Type() reflect.Type {
+	return p.arg.Type()
+}
+
+func (p *simpleAggregateFunctionParser) Parse(s io.RuneScanner) (driver.Value, error) {
+	return p.arg.Parse(s)
+}
+
 func newDateTimeParser(format string, loc *time.Location, unquote bool) (DataParser, error) {
 	return &dateTimeParser{
 		unquote:  unquote,
@@ -594,6 +606,15 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 			return nil, fmt.Errorf("failed to create parser for LowCardinality elements: %v", err)
 		}
 		return &lowCardinalityParser{subParser}, nil
+	case "SimpleAggregateFunction":
+		if len(t.Args) != 2 {
+			return nil, fmt.Errorf("incorrect number of arguments for SimpleAggregateFunction")
+		}
+		subParser, err := newDataParser(t.Args[1], unquote, opt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create parser for SimpleAggregateFunction element: %v", err)
+		}
+		return &simpleAggregateFunctionParser{subParser}, nil
 	default:
 		return nil, fmt.Errorf("type %s is not supported", t.Name)
 	}

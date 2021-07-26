@@ -335,6 +335,21 @@ func TestParseData(t *testing.T) {
 			output:    uint64(123),
 		},
 		{
+			name:      "simple aggregate function of uint64",
+			inputtype: "SimpleAggregateFunction(max, UInt64)",
+			inputdata: "123",
+			output:    uint64(123),
+		},
+		{
+			name:      "simple aggregate function of mixed tuple",
+			inputtype: "SimpleAggregateFunction(avg, Tuple(String, UInt64))",
+			inputdata: "('abc',123)",
+			output: struct {
+				Field0 string
+				Field1 uint64
+			}{"abc", uint64(123)},
+		},
+		{
 			name:      "ipv4",
 			inputtype: "IPv4",
 			inputdata: "127.0.0.1",
