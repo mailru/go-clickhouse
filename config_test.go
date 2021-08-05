@@ -9,7 +9,7 @@ import (
 
 func TestParseDSN(t *testing.T) {
 	dsn := "http://username:password@localhost:8123/test?timeout=1s&idle_timeout=2s&read_timeout=3s" +
-		"&write_timeout=4s&location=Local&max_execution_time=10&debug=1&kill_query=1&kill_query_timeout=5s"
+		"&write_timeout=4s&location=Local&max_execution_time=10&debug=1&kill_query=1&kill_query_timeout=5s&tls_config=tls-settings"
 	cfg, err := ParseDSN(dsn)
 	if assert.NoError(t, err) {
 		assert.Equal(t, "username", cfg.User)
@@ -17,6 +17,7 @@ func TestParseDSN(t *testing.T) {
 		assert.Equal(t, "http", cfg.Scheme)
 		assert.Equal(t, "localhost:8123", cfg.Host)
 		assert.Equal(t, "test", cfg.Database)
+		assert.Equal(t, "tls-settings", cfg.TLSConfig)
 		assert.Equal(t, time.Second, cfg.Timeout)
 		assert.Equal(t, 2*time.Second, cfg.IdleTimeout)
 		assert.Equal(t, 3*time.Second, cfg.ReadTimeout)
@@ -39,6 +40,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.False(t, cfg.Debug)
 	assert.False(t, cfg.KillQueryOnErr)
 	assert.Equal(t, time.UTC, cfg.Location)
+	assert.Equal(t, "", cfg.TLSConfig)
 	assert.EqualValues(t, 0, cfg.ReadTimeout)
 	assert.EqualValues(t, 0, cfg.WriteTimeout)
 	assert.EqualValues(t, 0, cfg.KillQueryTimeout)
@@ -64,7 +66,7 @@ func TestParseWrongDSN(t *testing.T) {
 
 func TestFormatDSN(t *testing.T) {
 	dsn := "http://username:password@localhost:8123/test?timeout=1s&idle_timeout=2s&read_timeout=3s" +
-		"&write_timeout=4s&location=Europe%2FMoscow&max_execution_time=10&debug=1&kill_query=1&kill_query_timeout=5s"
+		"&write_timeout=4s&location=Europe%2FMoscow&max_execution_time=10&debug=1&kill_query=1&kill_query_timeout=5s&tls_config=tls-settings"
 	cfg, err := ParseDSN(dsn)
 	if assert.NoError(t, err) {
 		dsn2 := cfg.FormatDSN()
@@ -79,6 +81,7 @@ func TestFormatDSN(t *testing.T) {
 		assert.Contains(t, dsn2, "debug=1")
 		assert.Contains(t, dsn2, "kill_query=1")
 		assert.Contains(t, dsn2, "kill_query_timeout=5s")
+		assert.Contains(t, dsn2, "tls_config=tls-settings")
 	}
 }
 
