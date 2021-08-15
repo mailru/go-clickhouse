@@ -72,6 +72,9 @@ func (cfg *Config) FormatDSN() string {
 	if cfg.KillQueryTimeout != 0 {
 		query.Set("kill_query_timeout", cfg.KillQueryTimeout.String())
 	}
+	if cfg.TLSConfig != "" {
+		query.Set("tls_config", cfg.TLSConfig)
+	}
 
 	u.RawQuery = query.Encode()
 	return u.String()
