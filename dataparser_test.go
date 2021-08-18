@@ -38,6 +38,12 @@ func TestParseData(t *testing.T) {
 			output:    nil,
 		},
 		{
+			name:      "nullable empty string",
+			inputtype: "Nullable(String)",
+			inputdata: "",
+			output:    "",
+		},
+		{
 			name:      "nullable int not null",
 			inputtype: "Nullable(UInt64)",
 			inputdata: "655",
