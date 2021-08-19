@@ -137,7 +137,10 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		for {
 			r, size, err := s.ReadRune()
 			if size == 0 {
-				s.UnreadRune()
+				err = s.UnreadRune()
+				if err != nil {
+					return nil, fmt.Errorf("error: %v", err)
+				}
 				break
 			}
 			
@@ -146,7 +149,10 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 			}
 
 			if r != '\'' && iter == 0 {
-				_ = s.UnreadRune()
+				err = s.UnreadRune()
+				if err != nil {
+					return nil, fmt.Errorf("error: %v", err)
+				}
 				d := readRaw(s)
 				dB = d
 				isNotString = true
