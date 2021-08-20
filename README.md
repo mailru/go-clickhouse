@@ -44,6 +44,7 @@ http://user:password@host:8123/clicks?read_timeout=10&write_timeout=20
 * [Nested(Name1 Type1, Name2 Type2, ...)](https://clickhouse.yandex/docs/en/data_types/nested_data_structures/nested/)
 * IPv4, IPv6
 * Tuple
+* SimpleAggregateFunction
 
 Notes:
 * database/sql does not allow to use big uint64 values. It is recommended use type `UInt64` which is provided by driver for such kind of values.
