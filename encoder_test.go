@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"regexp"
 	"testing"
 	"time"
 
@@ -66,6 +67,25 @@ func TestTextEncoder(t *testing.T) {
 		v, err := enc.Encode(tc.value)
 		if assert.NoError(t, err) {
 			assert.Equal(t, tc.expected, string(v))
+		}
+	}
+}
+
+func TestTextEncoder_Map(t *testing.T) {
+	testCases := []struct {
+		value interface{}
+		reg   *regexp.Regexp
+	}{
+		{value: Map(map[string]string{"KEY1": "Value1", "Key2": "Value2"}), reg: regexp.MustCompile(`map\(('KEY1','Value1','Key2','Value2'|'Key2','Value2','KEY1','Value1')\)`)},
+		{value: Map(map[string]int{"KEY1": 1, "Key2": 2}), reg: regexp.MustCompile(`map\(('KEY1',1,'Key2',2|'Key2',2,'KEY1',1)\)`)},
+		{value: Map(map[string]bool{"KEY1": true, "Key2": false}), reg: regexp.MustCompile(`map\(('KEY1',1,'Key2',0|'Key2',0,'KEY1',1)\)`)},
+	}
+
+	enc := new(textEncoder)
+	for _, tc := range testCases {
+		v, err := enc.Encode(tc.value)
+		if assert.NoError(t, err) {
+			assert.True(t, tc.reg.Match(v))
 		}
 	}
 }

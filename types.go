@@ -8,6 +8,18 @@ import (
 	"time"
 )
 
+func Map(v interface{}) driver.Valuer {
+	return mapp{v: v}
+}
+
+type mapp struct {
+	v interface{}
+}
+
+func (a mapp) Value() (driver.Value, error) {
+	return textEncode.Encode(a)
+}
+
 // Array wraps slice or array into driver.Valuer interface to allow pass through it from database/sql
 func Array(v interface{}) driver.Valuer {
 	return array{v: v}

@@ -29,6 +29,8 @@ func (e *textEncoder) Encode(value driver.Value) ([]byte, error) {
 		return e.encodeArray(reflect.ValueOf(v.v))
 	case tuple:
 		return e.encodeTuple(reflect.ValueOf(v.v))
+	case mapp:
+		return e.encodeMap(reflect.ValueOf(v.v))
 	case []byte:
 		return v, nil
 	case time.Time:
@@ -163,4 +165,36 @@ func (e *textEncoder) encodeTuplePart(value reflect.Value) ([]byte, error) {
 		res = append(res, b...)
 	}
 	return res, nil
+}
+
+func (e *textEncoder) encodeMap(m reflect.Value) ([]byte, error) {
+	if m.Kind() != reflect.Map {
+		return nil, fmt.Errorf("expected map, got %s", m.Kind())
+	}
+
+	keys := m.MapKeys()
+	res := make([]byte, 0)
+	res = append(res, "map("...)
+	for i, key := range keys {
+		value := m.MapIndex(key)
+
+		tmpKey, err := e.Encode(key.Interface())
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, tmpKey...)
+
+		res = append(res, ',')
+
+		tmpValue, err := e.Encode(value.Interface())
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, tmpValue...)
+
+		if i < len(keys)-1 {
+			res = append(res, ',')
+		}
+	}
+	return append(res, ')'), nil
 }
