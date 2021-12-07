@@ -7,6 +7,7 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -136,10 +137,10 @@ func (p *nullableParser) Parse(s io.RuneScanner) (driver.Value, error) {
 		isNotString := false
 		for {
 			r, size, err := s.ReadRune()
-			if err == io.EOF && size == 0 { 
+			if err == io.EOF && size == 0 {
 				break
 			}
-			
+
 			if err != nil {
 				return nil, fmt.Errorf("error: %v", err)
 			}
@@ -551,6 +552,17 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 			loc = opt.Location
 		}
 		return newDateTimeParser(timeFormat, loc, unquote)
+	case "DateTime64":
+		loc, err := time.LoadLocation(t.Args[1].Name)
+		if err != nil {
+			return nil, err
+		}
+		offset, err := strconv.Atoi(t.Args[0].Name)
+		if err != nil {
+			return nil, err
+		}
+		format := fmt.Sprintf("%s.%s", timeFormat, strings.Repeat("0", offset))
+		return newDateTimeParser(format, loc, unquote)
 	case "UInt8":
 		return &intParser{false, 8}, nil
 	case "UInt16":

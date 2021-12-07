@@ -29,6 +29,10 @@ func TestParseData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to load time zone Europe/Moscow: %v", err)
 	}
+	utc, err := time.LoadLocation("Etc/UTC")
+	if err != nil {
+		t.Fatalf("failed to load time zone Etc/UTC: %v", err)
+	}
 
 	testCases := []*testCase{
 		{
@@ -196,6 +200,25 @@ func TestParseData(t *testing.T) {
 			name:          "malformed datetime",
 			inputtype:     "DateTime",
 			inputdata:     "a000-00-00 00:00:00",
+			output:        time.Time{},
+			failParseData: true,
+		},
+		{
+			name:      "DateTime64: correct",
+			inputtype: "DateTime64(3, 'Etc/UTC')",
+			inputdata: "2021-12-07 00:00:00.000",
+			output:    time.Date(2021, 12, 7, 0, 0, 0, 0, utc),
+		},
+		{
+			name:      "DateTime64: in Moscow",
+			inputtype: "DateTime64(6, 'Europe/Moscow')",
+			inputdata: "2018-01-02 12:34:56.789012",
+			output:    time.Date(2018, 1, 2, 12, 34, 56, 789012000, moscow),
+		},
+		{
+			name:          "DateTime64: incorrect",
+			inputtype:     "DateTime64(4, 'Europe/Moscow')",
+			inputdata:     "2018-01-02 12:34:56.789",
 			output:        time.Time{},
 			failParseData: true,
 		},
