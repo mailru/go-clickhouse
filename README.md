@@ -26,7 +26,7 @@ schema://user:password@host[:port]/database?param1=value1&...&paramN=valueN
 
 example:
 ```
-http://user:password@host:8123/clicks?read_timeout=10&write_timeout=20
+http://user:password@host:8123/clicks?read_timeout=10s&write_timeout=20s
 ```
 
 ## Supported data types
