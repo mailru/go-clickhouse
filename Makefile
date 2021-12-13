@@ -5,7 +5,7 @@ init:
 	GO111MODULE=on go get github.com/golangci/golangci-lint/...@v1.35.2
 
 up_docker_server: stop_docker_server
-	docker run --rm=true -p 8123:8123 --name dbr-clickhouse-server -d yandex/clickhouse-server:latest;
+	docker run --rm=true -p 8123:8123 -p 9000:9000 --name dbr-clickhouse-server -d yandex/clickhouse-server:latest;
 
 stop_docker_server:
 	test -n "$$(docker ps --format {{.Names}} | grep dbr-clickhouse-server)" && docker stop dbr-clickhouse-server || true

@@ -18,7 +18,7 @@ var (
 	ErrNoRowsAffected    = errors.New("no RowsAffected available")
 )
 
-var errorRe = regexp.MustCompile(`(?s)Code: (\d+),.+DB::Exception: (.+),.*`)
+var errorRe = regexp.MustCompile(`(?s)Code: (\d+)[,\.].+DB::Exception: (.+)[,\.] .*`)
 
 // Error contains parsed information about server error
 type Error struct {

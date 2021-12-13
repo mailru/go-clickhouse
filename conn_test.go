@@ -36,15 +36,15 @@ func (s *connSuite) TestQuery() {
 		{"SELECT i64 AS num FROM data WHERE i64<?", []interface{}{-3}, [][]interface{}{}},
 		{"SELECT i64 AS num FROM data WHERE i64=?", []interface{}{nil}, [][]interface{}{}},
 		{"SELECT i64 AS num FROM data WHERE i64=?", []interface{}{-1}, [][]interface{}{{int64(-1)}}},
-		{"SELECT d32 AS num FROM data WHERE d32=?", []interface{}{Decimal32(10, 4)}, [][]interface{}{{"10.0000"}}},
-		{"SELECT d64 AS num FROM data WHERE d64=?", []interface{}{Decimal32(100, 4)}, [][]interface{}{{"100.0000"}}},
-		{"SELECT d128 AS num FROM data WHERE d128=?", []interface{}{Decimal32(1000, 4)}, [][]interface{}{{"1000.0000"}}},
+		{"SELECT d32 AS num FROM data WHERE d32=?", []interface{}{Decimal32(10.1111, 4)}, [][]interface{}{{"10.1111"}}},
+		{"SELECT d64 AS num FROM data WHERE d64=?", []interface{}{Decimal64(100.1111, 4)}, [][]interface{}{{"100.1111"}}},
+		{"SELECT d128 AS num FROM data WHERE d128=?", []interface{}{Decimal128(1000.1111, 4)}, [][]interface{}{{"1000.1111"}}},
 		{
 			"SELECT * FROM data WHERE u64=?",
 			[]interface{}{1},
 			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", "1", []int16{1}, []uint8{10},
 				parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one",
-				"10.0000", "100.0000", "1000.0000", "1.0000", "127.0.0.1", "2001:db8:3333:4444:5555:6666:7777:8888", "12345678", "one"}},
+				"10.1111", "100.1111", "1000.1111", "1.1111", "127.0.0.1", "2001:db8:3333:4444:5555:6666:7777:8888", "12345678", "one"}},
 		},
 		{
 			"SELECT i64, count() FROM data WHERE i64<0 GROUP BY i64 WITH TOTALS ORDER BY i64",
@@ -172,7 +172,7 @@ func (s *connSuite) TestRollback() {
 func (s *connSuite) TestServerError() {
 	_, err := s.conn.Query("SELECT 1 FROM '???'")
 	srvErr, ok := err.(*Error)
-	s.Require().True(ok)
+	s.Require().True(ok, err.Error())
 	s.Equal(62, srvErr.Code)
 	s.Contains(srvErr.Message, "Syntax error:")
 	s.Contains(srvErr.Error(), "Code: 62, Message: Syntax error:")

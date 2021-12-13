@@ -84,7 +84,7 @@ type decimal struct {
 
 // Value implements driver.Valuer
 func (d decimal) Value() (driver.Value, error) {
-	return []byte(fmt.Sprintf("toDecimal%d(%v, %d)", d.p, d.v, d.s)), nil
+	return []byte(fmt.Sprintf("toDecimal%d('%v', %d)", d.p, d.v, d.s)), nil
 }
 
 // IP returns compatible database format for net.IP

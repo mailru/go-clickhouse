@@ -50,16 +50,16 @@ func TestUInt64(t *testing.T) {
 func TestDecimal(t *testing.T) {
 	dv, err := Decimal32("1000", 4).Value()
 	if assert.NoError(t, err) {
-		assert.Equal(t, []byte("toDecimal32(1000, 4)"), dv)
+		assert.Equal(t, []byte("toDecimal32('1000', 4)"), dv)
 	}
 
 	dv, err = Decimal64(100, 1).Value()
 	if assert.NoError(t, err) {
-		assert.Equal(t, []byte("toDecimal64(100, 1)"), dv)
+		assert.Equal(t, []byte("toDecimal64('100', 1)"), dv)
 	}
 	dv, err = Decimal128(100.01, 1).Value()
 	if assert.NoError(t, err) {
-		assert.Equal(t, []byte("toDecimal128(100.01, 1)"), dv)
+		assert.Equal(t, []byte("toDecimal128('100.01', 1)"), dv)
 	}
 }
 
