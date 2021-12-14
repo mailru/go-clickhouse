@@ -29,10 +29,7 @@ func TestParseData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to load time zone Europe/Moscow: %v", err)
 	}
-	utc, err := time.LoadLocation("Etc/UTC")
-	if err != nil {
-		t.Fatalf("failed to load time zone Etc/UTC: %v", err)
-	}
+	utc := time.UTC
 
 	testCases := []*testCase{
 		{
@@ -205,7 +202,7 @@ func TestParseData(t *testing.T) {
 		},
 		{
 			name:      "DateTime64: correct",
-			inputtype: "DateTime64(3, 'Etc/UTC')",
+			inputtype: "DateTime64(3, 'UTC')",
 			inputdata: "2021-12-07 00:00:00.000",
 			output:    time.Date(2021, 12, 7, 0, 0, 0, 0, utc),
 		},
