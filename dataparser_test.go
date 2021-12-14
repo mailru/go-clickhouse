@@ -207,17 +207,54 @@ func TestParseData(t *testing.T) {
 			output:    time.Date(2021, 12, 7, 0, 0, 0, 0, utc),
 		},
 		{
-			name:      "DateTime64: in Moscow",
+			name:      "DateTime64: in Moscow with precision 6",
 			inputtype: "DateTime64(6, 'Europe/Moscow')",
 			inputdata: "2018-01-02 12:34:56.789012",
 			output:    time.Date(2018, 1, 2, 12, 34, 56, 789012000, moscow),
 		},
 		{
+			name:      "DateTime64: in Moscow with precision 3",
+			inputtype: "DateTime64(3, 'Europe/Moscow')",
+			inputdata: "2018-01-02 12:34:56.789012",
+			output:    time.Date(2018, 1, 2, 12, 34, 56, 789000000, moscow),
+		},
+		{
 			name:          "DateTime64: incorrect",
 			inputtype:     "DateTime64(4, 'Europe/Moscow')",
 			inputdata:     "2018-01-02 12:34:56.789",
-			output:        time.Time{},
 			failParseData: true,
+		},
+		{
+			name:          "DateTime64: no tick size",
+			inputtype:     "DateTime64",
+			inputdata:     "2018-01-02 12:34:56.789",
+			failNewParser: true,
+		},
+		{
+			name:          "DateTime64: no tick size",
+			inputtype:     "DateTime64(3, 'Nowhere')",
+			inputdata:     "2018-01-02 12:34:56.789",
+			failNewParser: true,
+		},
+		{
+			name:      "DateTime64: with argument and location, prefer argument",
+			inputtype: "DateTime64(3, 'America/Los_Angeles')",
+			inputdata: "2018-01-02 12:34:56.789",
+			inputopt: &DataParserOptions{
+				Location:      moscow,
+				UseDBLocation: true,
+			},
+			output: time.Date(2018, 1, 2, 12, 34, 56, 789000000, losAngeles),
+		},
+		{
+			name:      "DateTime64: with argument and location, prefer argument",
+			inputtype: "DateTime64(3)",
+			inputdata: "2018-01-02 12:34:56.789",
+			inputopt: &DataParserOptions{
+				Location:      moscow,
+				UseDBLocation: true,
+			},
+			output: time.Date(2018, 1, 2, 12, 34, 56, 789000000, moscow),
 		},
 		{
 			name:      "tuple",

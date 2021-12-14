@@ -553,10 +553,21 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		}
 		return newDateTimeParser(timeFormat, loc, unquote)
 	case "DateTime64":
-		loc, err := time.LoadLocation(t.Args[1].Name)
-		if err != nil {
-			return nil, err
+		if len(t.Args) < 1 {
+			return nil, fmt.Errorf("tick size not specified for DateTime64")
 		}
+
+		loc := time.UTC
+		if (opt == nil || opt.Location == nil || opt.UseDBLocation) && len(t.Args) > 1 {
+			var err error
+			loc, err = time.LoadLocation(t.Args[1].Name)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			loc = opt.Location
+		}
+
 		offset, err := strconv.Atoi(t.Args[0].Name)
 		if err != nil {
 			return nil, err
