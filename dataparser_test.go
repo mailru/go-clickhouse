@@ -225,6 +225,12 @@ func TestParseData(t *testing.T) {
 			failParseData: true,
 		},
 		{
+			name:      "DateTime64: zero",
+			inputtype: "DateTime64(3, 'Europe/Moscow')",
+			inputdata: "0000-00-00 00:00:00.000",
+			output:    time.Time{},
+		},
+		{
 			name:          "DateTime64: no tick size",
 			inputtype:     "DateTime64",
 			inputdata:     "2018-01-02 12:34:56.789",
