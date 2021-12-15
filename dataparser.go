@@ -578,7 +578,7 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 			if err != nil {
 				return nil, err
 			}
-		} else {
+		} else if opt != nil && opt.Location != nil {
 			loc = opt.Location
 		}
 
