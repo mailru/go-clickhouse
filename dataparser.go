@@ -244,18 +244,31 @@ func (p *stringParser) Type() reflect.Type {
 }
 
 type dateTimeParser struct {
-	unquote  bool
-	format   string
-	location *time.Location
+	unquote   bool
+	format    string
+	location  *time.Location
+	precision int
 }
 
 func (p *dateTimeParser) Parse(s io.RuneScanner) (driver.Value, error) {
-	str, err := readString(s, len(p.format), p.unquote)
+	l := len(p.format)
+	if p.precision > 0 {
+		if i := strings.Index(p.format, "."); i >= 0 {
+			l = i + p.precision + 1
+		}
+	}
+
+	str, err := readString(s, l, p.unquote)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read the string representation of date or datetime: %v", err)
 	}
 
-	if str == "0000-00-00" || str == "0000-00-00 00:00:00" {
+	test := str
+	if i := strings.Index(str, " "); i >= 0 {
+		test = str[:i]
+	}
+
+	if test == "0000-00-00" {
 		return time.Time{}, nil
 	}
 
@@ -384,11 +397,12 @@ func (p *simpleAggregateFunctionParser) Parse(s io.RuneScanner) (driver.Value, e
 	return p.arg.Parse(s)
 }
 
-func newDateTimeParser(format string, loc *time.Location, unquote bool) (DataParser, error) {
+func newDateTimeParser(format string, loc *time.Location, precision int, unquote bool) (DataParser, error) {
 	return &dateTimeParser{
-		unquote:  unquote,
-		format:   format,
-		location: loc,
+		unquote:   unquote,
+		format:    format,
+		location:  loc,
+		precision: precision,
 	}, nil
 }
 
@@ -539,7 +553,7 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		if opt != nil && opt.Location != nil {
 			loc = opt.Location
 		}
-		return newDateTimeParser(dateFormat, loc, unquote)
+		return newDateTimeParser(dateFormat, loc, 0, unquote)
 	case "DateTime":
 		loc := time.UTC
 		if (opt == nil || opt.Location == nil || opt.UseDBLocation) && len(t.Args) > 0 {
@@ -551,7 +565,7 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		} else if opt != nil && opt.Location != nil {
 			loc = opt.Location
 		}
-		return newDateTimeParser(timeFormat, loc, unquote)
+		return newDateTimeParser(timeFormat, loc, 0, unquote)
 	case "DateTime64":
 		if len(t.Args) < 1 {
 			return nil, fmt.Errorf("tick size not specified for DateTime64")
@@ -568,12 +582,16 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 			loc = opt.Location
 		}
 
-		offset, err := strconv.Atoi(t.Args[0].Name)
+		precision, err := strconv.Atoi(t.Args[0].Name)
 		if err != nil {
 			return nil, err
 		}
-		format := fmt.Sprintf("%s.%s", timeFormat, strings.Repeat("0", offset))
-		return newDateTimeParser(format, loc, unquote)
+
+		if precision < 0 {
+			return nil, fmt.Errorf("malformed tick size specified for DateTime64")
+		}
+
+		return newDateTimeParser(dateTime64Format, loc, precision, unquote)
 	case "UInt8":
 		return &intParser{false, 8}, nil
 	case "UInt16":
