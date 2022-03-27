@@ -6,9 +6,8 @@ Yet another Golang SQL database driver for [Yandex ClickHouse](https://clickhous
 
 * Uses official http interface
 * Compatibility with database/sql
-* Compatibility with [dbr](https://github.com/mailru/dbr)
-* Compatibility with [chproxy](https://github.com/Vertamedia/chproxy)
-* Compatibility with [clickhouse-bulk](https://github.com/nikepan/clickhouse-bulk)
+* Compatibility with [dbr](https://github.com/mailru/dbr), [chproxy](https://github.com/Vertamedia/chproxy), [clickhouse-bulk](https://github.com/nikepan/clickhouse-bulk)
+* For native interface check out [clickhouse-go](https://github.com/clickhouse/clickhouse-go)
 
 ## DSN
 ```
@@ -45,6 +44,7 @@ http://user:password@host:8123/clicks?read_timeout=10s&write_timeout=20s
 * IPv4, IPv6
 * Tuple
 * SimpleAggregateFunction
+* Map(K, V)
 
 Notes:
 * database/sql does not allow to use big uint64 values. It is recommended use type `UInt64` which is provided by driver for such kind of values.
@@ -269,7 +269,9 @@ func main() {
 ```
 
 ## Go versions
-Officially support last 3 golang releases
+Officially support last 4 golang releases
+
+## Additional clickhouse libraries
 
 
 ## Development
@@ -280,4 +282,4 @@ make init # dep ensure and install
 make test
 ```
 
-_Remember that `make init` will add a few binaries used for testing (like `golint` and it's dependencies) into your GOPATH_
+_Remember that `make init` will add a few binaries used for testing_

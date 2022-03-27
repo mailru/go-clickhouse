@@ -92,6 +92,22 @@ func TestParseTypeDesc(t *testing.T) {
 			},
 		},
 		{
+			name:  "map args",
+			input: "Map(String, Array(Int64))",
+			output: &TypeDesc{
+				Name: "Map",
+				Args: []*TypeDesc{
+					{
+						Name: "String",
+					},
+					{
+						Name: "Array",
+						Args: []*TypeDesc{{Name: "Int64"}},
+					},
+				},
+			},
+		},
+		{
 			name:  "unfinished arg list",
 			input: "Array(Tuple(Tuple(String, String), Tuple(String, UInt64))",
 			fail:  true,
