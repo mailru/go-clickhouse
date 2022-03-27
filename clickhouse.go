@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	sql.Register("clickhouse", new(chDriver))
+	sql.Register("chhttp", new(chDriver))
 }
 
 // chDriver implements sql.Driver interface

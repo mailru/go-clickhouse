@@ -64,16 +64,16 @@ func (s *chSuite) SetupSuite() {
 		dsn = "http://localhost:8123/default"
 	}
 
-	conn, err := sql.Open("clickhouse", dsn)
+	conn, err := sql.Open("chhttp", dsn)
 	s.Require().NoError(err)
 	s.Require().NoError(initialzer.Do(conn))
 	s.conn = conn
 
-	connWithCompression, err := sql.Open("clickhouse", dsn+"?enable_http_compression=1")
+	connWithCompression, err := sql.Open("chhttp", dsn+"?enable_http_compression=1")
 	s.Require().NoError(err)
 	s.connWithCompression = connWithCompression
 
-	connWithKillQuery, err := sql.Open("clickhouse", dsn+"?kill_query=1&read_timeout=1s")
+	connWithKillQuery, err := sql.Open("chhttp", dsn+"?kill_query=1&read_timeout=1s")
 	s.Require().NoError(err)
 	s.connWithKillQuery = connWithKillQuery
 }
