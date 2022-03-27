@@ -279,14 +279,6 @@ func (p *dateTimeParser) Type() reflect.Type {
 	return reflectTypeTime
 }
 
-type arrayParser struct {
-	arg DataParser
-}
-
-func (p *arrayParser) Type() reflect.Type {
-	return reflect.SliceOf(p.arg.Type())
-}
-
 type tupleParser struct {
 	args []DataParser
 }
@@ -331,6 +323,14 @@ func (p *tupleParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	return struc.Interface(), nil
 }
 
+type arrayParser struct {
+	arg DataParser
+}
+
+func (p *arrayParser) Type() reflect.Type {
+	return reflect.SliceOf(p.arg.Type())
+}
+
 func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	r := read(s)
 	if r != '[' {
@@ -371,6 +371,60 @@ func (p *arrayParser) Parse(s io.RuneScanner) (driver.Value, error) {
 	}
 
 	return slice.Interface(), nil
+}
+
+type mapParser struct {
+	key   DataParser
+	value DataParser
+}
+
+func (p *mapParser) Type() reflect.Type {
+	return reflect.MapOf(p.key.Type(), p.value.Type())
+}
+
+func (p *mapParser) Parse(s io.RuneScanner) (driver.Value, error) {
+	r := read(s)
+	if r != '{' {
+		return nil, fmt.Errorf("unexpected character '%c', expected '{' at the beginning of map", r)
+	}
+
+	m := reflect.MakeMap(p.Type())
+	for i := 0; ; i++ {
+		r := read(s)
+		_ = s.UnreadRune()
+		if r == '}' {
+			break
+		}
+
+		k, err := p.key.Parse(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse map key: %v", err)
+		}
+
+		r = read(s)
+		if r != ':' {
+			return nil, fmt.Errorf("unexpected character '%c', expected ':' at the middle of map", r)
+		}
+
+		v, err := p.value.Parse(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse map value: %v", err)
+		}
+
+		m.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+
+		r = read(s)
+		if r != ',' {
+			_ = s.UnreadRune()
+		}
+	}
+
+	r = read(s)
+	if r != '}' {
+		return nil, fmt.Errorf("unexpected character '%c', expected '}' at the end of map", r)
+	}
+
+	return m.Interface(), nil
 }
 
 type lowCardinalityParser struct {
@@ -663,6 +717,22 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 			return nil, fmt.Errorf("failed to create parser for SimpleAggregateFunction element: %v", err)
 		}
 		return &simpleAggregateFunctionParser{subParser}, nil
+	case "Map":
+		if len(t.Args) != 2 {
+			return nil, fmt.Errorf("incorrect number of arguments for Map")
+		}
+		keyParser, err := newDataParser(t.Args[0], true, opt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create parser for map keys: %v", err)
+		}
+		valueParser, err := newDataParser(t.Args[1], true, opt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create parser for map values: %v", err)
+		}
+		return &mapParser{
+			key:   keyParser,
+			value: valueParser,
+		}, nil
 	default:
 		return nil, fmt.Errorf("type %s is not supported", t.Name)
 	}

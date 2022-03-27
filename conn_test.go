@@ -42,9 +42,15 @@ func (s *connSuite) TestQuery() {
 		{
 			"SELECT * FROM data WHERE u64=?",
 			[]interface{}{1},
-			[][]interface{}{{int64(-1), uint64(1), float64(1), "1", "1", []int16{1}, []uint8{10},
-				parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one",
-				"10.1111", "100.1111", "1000.1111", "1.1111", "127.0.0.1", "2001:db8:3333:4444:5555:6666:7777:8888", "12345678", "one"}},
+			[][]interface{}{
+				{
+					int64(-1), uint64(1), float64(1), "1", "1", []int16{1}, []uint8{10},
+					parseDate("2011-03-06"), parseDateTime("2011-03-06 06:20:00"), "one",
+					"10.1111", "100.1111", "1000.1111", "1.1111", "127.0.0.1",
+					"2001:db8:3333:4444:5555:6666:7777:8888", "12345678", "one",
+					map[string][]int64{"key1": {1}},
+				},
+			},
 		},
 		{
 			"SELECT i64, count() FROM data WHERE i64<0 GROUP BY i64 WITH TOTALS ORDER BY i64",
