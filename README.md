@@ -74,7 +74,7 @@ See `Example` section for use cases.
 
 ## Install
 ```
-go get -u github.com/mailru/go-clickhouse
+go get -u github.com/mailru/go-clickhouse/v2
 ```
 
 ## Example
@@ -87,7 +87,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/mailru/go-clickhouse"
+	"github.com/mailru/go-clickhouse/v2"
 )
 
 func main() {
@@ -237,7 +237,7 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/mailru/go-clickhouse"
+	_ "github.com/mailru/go-clickhouse/v2"
 	"github.com/mailru/dbr"
 )
 
