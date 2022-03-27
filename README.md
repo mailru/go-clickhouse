@@ -53,6 +53,7 @@ Notes:
 * for passing decimal value please use the wrappers `clickhouse.Decimal*`
 * for passing IPv4/IPv6 types use `clickhouse.IP`
 * for passing Tuple types use `clickhouse.Tuple` or structs
+* for passing Map types use `clickhouse.Map`
 
 ## Supported request params
 
@@ -90,7 +91,7 @@ import (
 )
 
 func main() {
-	connect, err := sql.Open("clickhouse", "http://127.0.0.1:8123/default")
+	connect, err := sql.Open("chhttp", "http://127.0.0.1:8123/default")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -241,7 +242,7 @@ import (
 )
 
 func main() {
-	connect, err := dbr.Open("clickhouse", "http://127.0.0.1:8123/default", nil)
+	connect, err := dbr.Open("chhttp", "http://127.0.0.1:8123/default", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
