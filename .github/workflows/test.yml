@@ -16,7 +16,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.35.2
+          version: latest
 
   test:
     runs-on: ubuntu-latest
@@ -43,6 +43,6 @@ jobs:
 
     services:
       clickhouse:
-        image: yandex/clickhouse-server:latest
+        image: clickhouse/clickhouse-server:latest
         ports:
           - 8123:8123
