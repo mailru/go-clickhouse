@@ -15,6 +15,7 @@ var (
 	reflectTypeString      = reflect.TypeOf("")
 	reflectTypeTime        = reflect.TypeOf(time.Time{})
 	reflectTypeEmptyStruct = reflect.TypeOf(struct{}{})
+	reflectTypeBool        = reflect.TypeOf(bool(false))
 	reflectTypeInt8        = reflect.TypeOf(int8(0))
 	reflectTypeInt16       = reflect.TypeOf(int16(0))
 	reflectTypeInt32       = reflect.TypeOf(int32(0))
@@ -460,6 +461,24 @@ func newDateTimeParser(format string, loc *time.Location, precision int, unquote
 	}, nil
 }
 
+type boolParser struct{}
+
+func (p *boolParser) Parse(s io.RuneScanner) (driver.Value, error) {
+	repr := readRaw(s).String()
+	switch repr {
+	case "true":
+		return true, nil
+	case "false":
+		return false, nil
+	default:
+		return nil, fmt.Errorf("incorrect bool value: %v", repr)
+	}
+}
+
+func (p *boolParser) Type() reflect.Type {
+	return reflectTypeBool
+}
+
 type intParser struct {
 	signed  bool
 	bitSize int
@@ -646,6 +665,8 @@ func newDataParser(t *TypeDesc, unquote bool, opt *DataParserOptions) (DataParse
 		}
 
 		return newDateTimeParser(dateTime64Format, loc, precision, unquote)
+	case "Bool":
+		return &boolParser{}, nil
 	case "UInt8":
 		return &intParser{false, 8}, nil
 	case "UInt16":
