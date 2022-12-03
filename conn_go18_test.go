@@ -38,13 +38,13 @@ func (s *connSuite) TestPing() {
 	s.EqualError(s.conn.PingContext(ctx), "context canceled")
 }
 
-func (s *connSuite) TestPassSettingsParamsFromContext() {
-	ctx := context.WithValue(context.Background(), SettingsParams, map[string]string{
+func (s *connSuite) TestPassRequestQueryParamsFromContext() {
+	ctx := context.WithValue(context.Background(), RequestQueryParams, map[string]string{
 		"max_read_buffer_size": "1",
 	})
 	s.NoError(s.conn.PingContext(ctx))
 
-	ctx = context.WithValue(context.Background(), SettingsParams, map[string]string{
+	ctx = context.WithValue(context.Background(), RequestQueryParams, map[string]string{
 		"no_cache": "1",
 	})
 	s.EqualError(s.conn.PingContext(ctx), "Code: 115, Message: Unknown setting no_cache")
