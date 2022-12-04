@@ -27,6 +27,9 @@ const (
 	QueryID key = iota
 	// QuotaKey uses for setting quota_key request param for request to Clickhouse
 	QuotaKey
+	// RequestQueryParams uses for custom setting request params for request to Clickhouse
+	// presented as map[string]string -> key1=value1&key2=value2... etc
+	RequestQueryParams
 
 	quotaKeyParamName = "quota_key"
 	queryIDParamName  = "query_id"
@@ -340,7 +343,18 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 			reqQuery.Add(queryIDParamName, queryID)
 		}
 
+		requestQueryParams, requestQueryParamsOk := ctx.Value(RequestQueryParams).(map[string]string)
+		if requestQueryParamsOk && len(requestQueryParams) != 0 {
+			if reqQuery == nil {
+				reqQuery = req.URL.Query()
+			}
+
+			for name, value := range requestQueryParams {
+				reqQuery.Add(name, value)
+			}
+		}
 	}
+
 	if reqQuery != nil {
 		req.URL.RawQuery = reqQuery.Encode()
 	}
