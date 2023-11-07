@@ -118,6 +118,11 @@ func ParseDSN(dsn string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if u.Host == "" {
+		return nil, fmt.Errorf("invalid host")
+	}
+
 	cfg := NewConfig()
 
 	cfg.Scheme, cfg.Host = u.Scheme, u.Host
@@ -184,7 +189,7 @@ func parseDSNParams(cfg *Config, params map[string][]string) (err error) {
 func ensureHavePort(addr string) string {
 	if _, _, err := net.SplitHostPort(addr); err != nil {
 		// we get the missing port error here
-		if addr[0] == '[' && addr[len(addr)-1] == ']' {
+		if len(addr) > 1 && addr[0] == '[' && addr[len(addr)-1] == ']' {
 			// ipv6 brackets
 			addr = addr[1 : len(addr)-1]
 		}
