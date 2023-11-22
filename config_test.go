@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -53,14 +54,18 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestParseWrongDSN(t *testing.T) {
-	testCases := []string{
-		"http://localhost:8123/?database=test",
-		"http://localhost:8123/?default_format=Native",
-		"http://localhost:8123/?query=SELECT%201",
+	testCases := []struct {
+		dsn         string
+		errExpected error
+	}{
+		{dsn: "http:bad://localhost:8123/?database=test", errExpected: fmt.Errorf("invalid host")},
+		{dsn: "http://localhost:8123/?database=test", errExpected: fmt.Errorf("unknown option 'database'")},
+		{dsn: "http://localhost:8123/?default_format=Native", errExpected: fmt.Errorf("unknown option 'default_format'")},
+		{dsn: "http://localhost:8123/?query=SELECT%201", errExpected: fmt.Errorf("unknown option 'query'")},
 	}
 	for _, tc := range testCases {
-		_, err := ParseDSN(tc)
-		assert.Error(t, err)
+		_, err := ParseDSN(tc.dsn)
+		assert.Equal(t, tc.errExpected, err)
 	}
 }
 
