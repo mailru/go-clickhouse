@@ -6,15 +6,15 @@ import (
 )
 
 func init() {
-	sql.Register("chhttp", new(ChDriver))
+	sql.Register("chhttp", new(Driver))
 }
 
-// ChDriver implements sql.Driver interface
-type ChDriver struct {
+// Driver implements sql.Driver interface
+type Driver struct {
 }
 
 // Open returns new db connection
-func (d *ChDriver) Open(dsn string) (driver.Conn, error) {
+func (d *Driver) Open(dsn string) (driver.Conn, error) {
 	cfg, err := ParseDSN(dsn)
 	if err != nil {
 		return nil, err
