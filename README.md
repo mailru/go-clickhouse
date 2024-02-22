@@ -267,6 +267,11 @@ func main() {
 	}
 }
 ```
+Use with trace
+```
+sqltrace.Register("chttp", &clickhouse.Driver{})
+db, err := sqltrace.Open("chttp", "http://127.0.0.1:8123/default")
+```
 
 ## Go versions
 Officially support last 4 golang releases
