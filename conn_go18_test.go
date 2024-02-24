@@ -47,7 +47,7 @@ func (s *connSuite) TestPassRequestQueryParamsFromContext() {
 	ctx = context.WithValue(context.Background(), RequestQueryParams, map[string]string{
 		"no_cache": "1",
 	})
-	s.EqualError(s.conn.PingContext(ctx), "Code: 115, Message: Unknown setting no_cache")
+	s.EqualError(s.conn.PingContext(ctx), "Code: 115, Message: Setting no_cache is neither a builtin setting nor started with the prefix 'SQL_' registered for user-defined settings")
 }
 
 func (s *connSuite) TestColumnTypes() {
