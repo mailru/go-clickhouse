@@ -60,21 +60,25 @@ func parseTypeDesc(tokens []*token) (*TypeDesc, []*token, error) {
 	}
 }
 
-// ParseTypeDesc parses the type description that ClickHouse provides.
-//
-// The grammar is quite simple:
-//     desc
-//         name
-//         name()
-//         name(args)
-//     args
-//         desc
-//         desc, args
-//
-// Examples:
-//     String
-//     Nullable(Nothing)
-//     Array(Tuple(Tuple(String, String), Tuple(String, UInt64)))
+/*
+ParseTypeDesc parses the type description that ClickHouse provides.
+
+The grammar is quite simple:
+
+	desc
+	    name
+	    name()
+	    name(args)
+	args
+	    desc
+	    desc, args
+
+Examples:
+
+	String
+	Nullable(Nothing)
+	Array(Tuple(Tuple(String, String), Tuple(String, UInt64)))
+*/
 func ParseTypeDesc(s string) (*TypeDesc, error) {
 	tokens, err := tokenizeString(s)
 	if err != nil {

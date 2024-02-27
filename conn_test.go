@@ -179,9 +179,9 @@ func (s *connSuite) TestServerError() {
 	_, err := s.conn.Query("SELECT 1 FROM '???'")
 	srvErr, ok := err.(*Error)
 	s.Require().True(ok, err.Error())
-	s.Equal(62, srvErr.Code)
-	s.Contains(srvErr.Message, "Syntax error:")
-	s.Contains(srvErr.Error(), "Code: 62, Message: Syntax error:")
+	s.Equal(60, srvErr.Code)
+	s.Contains(srvErr.Message, "Table default")
+	s.Contains(srvErr.Error(), "Code: 60, Message: Table default")
 }
 
 func (s *connSuite) TestServerKillQuery() {
