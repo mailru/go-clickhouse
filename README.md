@@ -267,6 +267,36 @@ func main() {
 	}
 }
 ```
+Use with [DataDog trace](https://pkg.go.dev/gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql)
+```go
+package main
+
+import (
+	"log"
+
+	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
+
+	clickhouse "github.com/mailru/go-clickhouse/v2"
+)
+
+func main() {
+	// The first step is to register the clickhouse driver.
+	sqltrace.Register("chhttp", &clickhouse.Driver{})
+
+	// Followed by a call to Open.
+    db, err := sqltrace.Open("chhttp", "http://127.0.0.1:8123/default")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rows, err := db.Query("SELECT name FROM users WHERE age=?", 27)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+}
+
+```
 
 ## Go versions
 Officially support last 4 golang releases

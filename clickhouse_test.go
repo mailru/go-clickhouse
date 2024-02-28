@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_ driver.Driver = new(chDriver)
+	_ driver.Driver = new(Driver)
 )
 
 var ddls = []string{
