@@ -38,7 +38,7 @@ loop:
 		switch r {
 		case eof:
 			break loop
-		case ',', ']', ')':
+		case ',', ']', ')', '}':
 			_ = s.UnreadRune()
 			break loop
 		}
