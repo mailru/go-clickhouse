@@ -287,6 +287,12 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		// response
 		return nil, newError(string(msg))
 	}
+
+	if err = callCtxRespCallback(ctx, req, resp); err != nil {
+		c.cancel = nil
+		return nil, fmt.Errorf("resp callback: %w", err)
+	}
+
 	return resp.Body, nil
 }
 
