@@ -277,6 +277,12 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		c.cancel = nil
 		return nil, fmt.Errorf("doRequest: transport failed to send a request to ClickHouse: %w", err)
 	}
+
+        if err = callCtxTransportCallback(ctx, req, resp); err != nil {
+                c.cancel = nil
+                return nil, fmt.Errorf("doRequest: transport callback: %w", err)
+        }
+
 	if resp.StatusCode != 200 {
 		msg, err := readResponse(resp)
 		c.cancel = nil
@@ -287,6 +293,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		// response
 		return nil, newError(string(msg))
 	}
+
 	return resp.Body, nil
 }
 
