@@ -60,7 +60,7 @@ func (s *connSuite) TestColumnTypes() {
 		"Int64", "UInt64", "Float64", "Bool", "String", "String", "Array(Int16)", "Array(UInt8)", "Date", "DateTime",
 		"Enum8('one' = 1, 'two' = 2, 'three' = 3)",
 		"Decimal(9, 4)", "Decimal(18, 4)", "Decimal(38, 4)", "Decimal(10, 4)", "IPv4", "IPv6", "FixedString(8)", "LowCardinality(String)",
-		"Map(String, Array(Int64))", "Map(String, Int64)",
+		"Map(String, Array(Int64))", "Map(String, Int64)", "Map(Int32, Int32)",
 	}
 	s.Require().Equal(len(expected), len(types))
 	for i, e := range expected {

@@ -50,6 +50,7 @@ func (s *connSuite) TestQuery() {
 					"2001:db8:3333:4444:5555:6666:7777:8888", "12345678", "one",
 					map[string][]int64{"key1": {1}},
 					map[string]int64{"key1": 1},
+					map[int32]int32{1: 1},
 				},
 			},
 		},
