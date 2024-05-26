@@ -182,8 +182,8 @@ func (s *connSuite) TestServerError() {
 	srvErr, ok := err.(*Error)
 	s.Require().True(ok, err.Error())
 	s.Equal(60, srvErr.Code)
-	s.Contains(srvErr.Message, "Table default")
-	s.Contains(srvErr.Error(), "Code: 60, Message: Table default")
+	s.Contains(srvErr.Message, "Unknown table expression identifier '???' in scope SELECT 1 FROM `???`")
+	s.Contains(srvErr.Error(), "Code: 60, Message: Unknown table expression identifier '???' in scope SELECT 1 FROM `???`")
 }
 
 func (s *connSuite) TestServerKillQuery() {
