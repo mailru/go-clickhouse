@@ -50,6 +50,7 @@ func (s *connSuite) TestQuery() {
 					"2001:db8:3333:4444:5555:6666:7777:8888", "12345678", "one",
 					map[string][]int64{"key1": {1}},
 					map[string]int64{"key1": 1},
+					map[int32]int32{1: 1},
 				},
 			},
 		},
@@ -181,8 +182,8 @@ func (s *connSuite) TestServerError() {
 	srvErr, ok := err.(*Error)
 	s.Require().True(ok, err.Error())
 	s.Equal(60, srvErr.Code)
-	s.Contains(srvErr.Message, "Table default")
-	s.Contains(srvErr.Error(), "Code: 60, Message: Table default")
+	s.Contains(srvErr.Message, "Unknown table expression identifier '???' in scope SELECT 1 FROM `???`")
+	s.Contains(srvErr.Error(), "Code: 60, Message: Unknown table expression identifier '???' in scope SELECT 1 FROM `???`")
 }
 
 func (s *connSuite) TestServerKillQuery() {
