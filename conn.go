@@ -294,7 +294,7 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		// response
 		return nil, newError(string(msg))
 	}
-	if errHeader, ok := resp.Header["X-ClickHouse-Exception-Code"]; ok {
+	if errHeader, ok := resp.Header[http.CanonicalHeaderKey("X-ClickHouse-Exception-Code")]; ok {
 		return nil, newError(strings.Join(errHeader, ", "))
 	}
 
