@@ -191,7 +191,7 @@ func (c *conn) beginTx(ctx context.Context) (driver.Tx, error) {
 	return c, nil
 }
 
-func (c *conn) killQuery(req *http.Request, args []driver.Value) error {
+func (c *conn) killQuery(req *http.Request) error {
 	if !c.killQueryOnErr {
 		return nil
 	}
@@ -206,7 +206,7 @@ func (c *conn) killQuery(req *http.Request, args []driver.Value) error {
 	}
 	ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 	defer cancelFunc()
-	req, err := c.buildRequest(ctx, query, args)
+	req, err := c.buildRequest(ctx, query, nil)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (c *conn) query(ctx context.Context, query string, args []driver.Value) (dr
 	body, err := c.doRequest(ctx, req)
 	if err != nil {
 		if _, ok := err.(*Error); !ok && err != driver.ErrBadConn {
-			killErr := c.killQuery(req, args)
+			killErr := c.killQuery(req)
 			if killErr != nil {
 				c.log("error from killQuery", killErr)
 			}
@@ -278,10 +278,10 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		return nil, fmt.Errorf("doRequest: transport failed to send a request to ClickHouse: %w", err)
 	}
 
-        if err = callCtxTransportCallback(ctx, req, resp); err != nil {
-                c.cancel = nil
-                return nil, fmt.Errorf("doRequest: transport callback: %w", err)
-        }
+	if err = callCtxTransportCallback(ctx, req, resp); err != nil {
+		c.cancel = nil
+		return nil, fmt.Errorf("doRequest: transport callback: %w", err)
+	}
 
 	if resp.StatusCode != 200 {
 		msg, err := readResponse(resp)
