@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -292,6 +293,9 @@ func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser,
 		// we got non-200 response, which means ClickHouse send an error in the
 		// response
 		return nil, newError(string(msg))
+	}
+	if errHeader, ok := resp.Header[http.CanonicalHeaderKey("X-ClickHouse-Exception-Code")]; ok {
+		return nil, newError(strings.Join(errHeader, ", "))
 	}
 
 	return resp.Body, nil
