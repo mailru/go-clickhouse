@@ -19,6 +19,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type key int
@@ -372,6 +375,12 @@ func (c *conn) buildRequest(ctx context.Context, query string, params []driver.V
 
 	if c.useGzipCompression {
 		req.Header.Set("Content-Encoding", "gzip")
+	}
+
+	parentSpan := trace.SpanFromContext(ctx)
+	if parentSpan.SpanContext().IsValid() {
+		carrier := propagation.HeaderCarrier(req.Header)
+		otel.GetTextMapPropagator().Inject(ctx, carrier)
 	}
 
 	return req, nil
