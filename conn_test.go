@@ -13,6 +13,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/trace"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -377,6 +381,72 @@ func (s *connSuite) TestBuildRequestWithQueryIdAndQuotaKey() {
 		}
 	}
 }
+
+func (s *connSuite) TestBuildRequestWithTraceContext() {
+	cn := newConn(NewConfig())
+	testCases := []struct {
+		name                       string
+		traceProvider              oteltrace.TracerProvider
+		propagator                 propagation.TextMapPropagator
+		expectedValidSpan          bool
+		expectedTraceHeaderPresent bool
+	}{
+		{
+			name:                       "trace context",
+			traceProvider:              trace.NewTracerProvider(),
+			propagator:                 propagation.TraceContext{},
+			expectedTraceHeaderPresent: true,
+			expectedValidSpan:          true,
+		},
+		{
+			name:                       "trace context with noop trace provider",
+			traceProvider:              oteltrace.NewNoopTracerProvider(),
+			propagator:                 propagation.TraceContext{},
+			expectedTraceHeaderPresent: false,
+			expectedValidSpan:          false,
+		},
+		{
+			name:                       "trace context with noop propagator",
+			traceProvider:              trace.NewTracerProvider(),
+			propagator:                 propagation.NewCompositeTextMapPropagator(),
+			expectedTraceHeaderPresent: false,
+			expectedValidSpan:          false,
+		},
+		{
+			name:                       "trace context with noop provider and propagator",
+			traceProvider:              oteltrace.NewNoopTracerProvider(),
+			propagator:                 propagation.NewCompositeTextMapPropagator(),
+			expectedTraceHeaderPresent: false,
+			expectedValidSpan:          false,
+		},
+	}
+	for _, tc := range testCases {
+		ctx := context.Background()
+		otel.SetTextMapPropagator(tc.propagator)
+		// start span
+		trCtx, expectedSpan := tc.traceProvider.Tracer("go test").Start(ctx, tc.name)
+		req, err := cn.buildRequest(trCtx, "SELECT 1", nil)
+		expectedSpan.End()
+		if s.NoError(err) {
+			// check TraceParent header present in request header
+			traceHeader := req.Header.Get("TraceParent")
+			traceHeaderPresent := len(traceHeader) > 0
+			s.Equal(tc.expectedTraceHeaderPresent, traceHeaderPresent)
+
+			reqCtx := context.Background()
+			reqTrCtx := otel.GetTextMapPropagator().Extract(reqCtx, propagation.HeaderCarrier(req.Header))
+			reqSpan := oteltrace.SpanFromContext(reqTrCtx).SpanContext()
+
+			// check if request span valid
+			s.Equal(tc.expectedValidSpan, reqSpan.IsValid())
+			if tc.expectedValidSpan {
+				s.Equal(expectedSpan.SpanContext().SpanID(), reqSpan.SpanID())
+				s.Equal(expectedSpan.SpanContext().TraceID(), reqSpan.TraceID())
+			}
+		}
+	}
+}
+
 func (s *connSuite) TestBuildRequestParamsInterpolation() {
 	query := `INSERT INTO test (str) VALUES ("Question?")`
 	cn := newConn(NewConfig())

@@ -297,7 +297,7 @@ func main() {
 }
 
 ```
-Trace context propogation using [OTEL SDK v1.7.0](https://github.com/open-telemetry/opentelemetry-go/tree/v1.7.0)
+Trace context propogation using OTEL SDK
 ```go
 package main
 
