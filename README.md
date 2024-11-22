@@ -297,7 +297,69 @@ func main() {
 }
 
 ```
+Trace context propogation using OTEL SDK
+```go
+package main
 
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/trace"
+	oteltrace "go.opentelemetry.io/otel/trace"
+
+	"database/sql"
+
+	_ "github.com/mailru/go-clickhouse/v2"
+)
+
+func startTracing() (oteltrace.TracerProvider, error) {
+	return trace.NewTracerProvider(), nil
+}
+
+func main() {
+	// Open DB connection
+	connect, err := sql.Open("chhttp", "http://127.0.0.1:8123/default")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx := context.Background()
+
+	// Get trace provider
+	tp, err := startTracing()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Set MapPropagator
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+
+	if err := connect.PingContext(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	// start span
+	trCtx, span := tp.Tracer("test").Start(ctx, "app-query")
+
+	// execute query with span context
+	rows, err := connect.QueryContext(trCtx, "SELECT COUNT() FROM (SELECT number FROM system.numbers LIMIT 5)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	span.End()
+	var count uint64
+	for rows.Next() {
+		if err := rows.Scan(&count); err != nil {
+			log.Fatal(err)
+		}
+	}
+	fmt.Printf("count: %d\n", count)
+}
+
+```
 ## Go versions
 Officially support last 4 golang releases
 
