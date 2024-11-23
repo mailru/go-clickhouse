@@ -7,7 +7,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 )
 
@@ -37,7 +37,7 @@ func (c *conn) Ping(ctx context.Context) error {
 	defer respBody.Close()
 
 	// drain the response body to check if we got expected `1`
-	resp, err := ioutil.ReadAll(respBody)
+	resp, err := io.ReadAll(respBody)
 	if err != nil {
 		return fmt.Errorf("ping: failed to read the response: %w", err)
 	}

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -220,7 +219,7 @@ func (c *conn) killQuery(req *http.Request) error {
 	}
 	if body != nil {
 		// Drain body to enable connection reuse
-		_, _ = io.Copy(ioutil.Discard, body)
+		_, _ = io.Copy(io.Discard, body)
 		body.Close()
 	}
 	return nil
@@ -259,7 +258,7 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	body, err := c.doRequest(ctx, req)
 	if body != nil {
 		// Drain body to enable connection reuse
-		_, _ = io.Copy(ioutil.Discard, body)
+		_, _ = io.Copy(io.Discard, body)
 		body.Close()
 	}
 	return emptyResult, err
