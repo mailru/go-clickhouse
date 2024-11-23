@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
@@ -42,7 +41,7 @@ func TestTextRows(t *testing.T) {
 		return
 	}
 	assert.Equal(t, []driver.Value{int32(2), "world"}, dest)
-	data, err := ioutil.ReadAll(rows.respBody)
+	data, err := io.ReadAll(rows.respBody)
 	if !assert.NoError(t, err) {
 		return
 	}

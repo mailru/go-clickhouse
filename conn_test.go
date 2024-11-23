@@ -5,7 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/trace"
 	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 var (
@@ -229,7 +230,7 @@ func (s *connSuite) TestBuildRequestReadonlyWithAuth() {
 		s.Equal(http.MethodPost, req.Method)
 		s.Equal(cn.url.String(), req.URL.String())
 		s.Nil(req.URL.User)
-		b, err := ioutil.ReadAll(req.Body)
+		b, err := io.ReadAll(req.Body)
 		s.Require().NoError(err)
 		s.Equal("SELECT 1", string(b))
 	}
@@ -400,7 +401,7 @@ func (s *connSuite) TestBuildRequestWithTraceContext() {
 		},
 		{
 			name:                       "trace context with noop trace provider",
-			traceProvider:              oteltrace.NewNoopTracerProvider(),
+			traceProvider:              noop.NewTracerProvider(),
 			propagator:                 propagation.TraceContext{},
 			expectedTraceHeaderPresent: false,
 			expectedValidSpan:          false,
@@ -414,7 +415,7 @@ func (s *connSuite) TestBuildRequestWithTraceContext() {
 		},
 		{
 			name:                       "trace context with noop provider and propagator",
-			traceProvider:              oteltrace.NewNoopTracerProvider(),
+			traceProvider:              noop.NewTracerProvider(),
 			propagator:                 propagation.NewCompositeTextMapPropagator(),
 			expectedTraceHeaderPresent: false,
 			expectedValidSpan:          false,
@@ -452,7 +453,7 @@ func (s *connSuite) TestBuildRequestParamsInterpolation() {
 	cn := newConn(NewConfig())
 	req, err := cn.buildRequest(context.Background(), query, make([]driver.Value, 0))
 	if s.NoError(err) {
-		body, e := ioutil.ReadAll(req.Body)
+		body, e := io.ReadAll(req.Body)
 		if s.NoError(e) {
 			s.Equal(query, string(body))
 		}
@@ -469,7 +470,7 @@ func (s *connSuite) TestRequestBodyGzipCompression() {
 		gz, err := gzip.NewReader(req.Body)
 		if s.NoError(err) {
 			defer gz.Close()
-			body, e := ioutil.ReadAll(gz)
+			body, e := io.ReadAll(gz)
 			if s.NoError(e) {
 				s.Equal(query, string(body))
 			}
