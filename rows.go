@@ -73,7 +73,7 @@ func (r *textRows) Columns() []string {
 
 func (r *textRows) Close() error {
 	r.c.cancel = nil
-	return r.respBody.Close()
+	return r.respBody.Close() // This also cancels the request context.
 }
 
 func (r *textRows) Next(dest []driver.Value) error {

@@ -217,11 +217,9 @@ func (c *conn) killQuery(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if body != nil {
-		// Drain body to enable connection reuse
-		_, _ = io.Copy(io.Discard, body)
-		body.Close()
-	}
+	defer body.Close()
+	// Drain body to enable connection reuse
+	_, _ = io.Copy(io.Discard, body)
 	return nil
 }
 
@@ -243,6 +241,7 @@ func (c *conn) query(ctx context.Context, query string, args []driver.Value) (dr
 		}
 		return nil, err
 	}
+	// Not closing body now - it will be closed when rows are closed.
 
 	return newTextRows(c, body, c.location, c.useDBLocation)
 }
@@ -257,38 +256,53 @@ func (c *conn) exec(ctx context.Context, query string, args []driver.Value) (dri
 	}
 	body, err := c.doRequest(ctx, req)
 	if body != nil {
+		defer body.Close()
 		// Drain body to enable connection reuse
 		_, _ = io.Copy(io.Discard, body)
-		body.Close()
 	}
 	return emptyResult, err
 }
 
-func (c *conn) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser, error) {
+type cancellingReadCloser struct {
+	io.ReadCloser
+	cancel context.CancelFunc
+}
+
+func (crc cancellingReadCloser) Close() error {
+	crc.cancel()
+	return crc.ReadCloser.Close()
+}
+
+func (c *conn) doRequest(ctx context.Context, req *http.Request) (body io.ReadCloser, err error) {
 	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		if err != nil {
+			c.cancel = nil
+			cancel()
+		} else {
+			// Context will be automatically canceled when body is closed.
+			body = cancellingReadCloser{body, cancel}
+		}
+	}()
 	transport := c.transport
 	c.cancel = cancel
 
 	if transport == nil {
-		c.cancel = nil
 		return nil, driver.ErrBadConn
 	}
 
 	req = req.WithContext(ctx)
 	resp, err := transport.RoundTrip(req)
 	if err != nil {
-		c.cancel = nil
 		return nil, fmt.Errorf("doRequest: transport failed to send a request to ClickHouse: %w", err)
 	}
 
 	if err = callCtxTransportCallback(ctx, req, resp); err != nil {
-		c.cancel = nil
 		return nil, fmt.Errorf("doRequest: transport callback: %w", err)
 	}
 
 	if resp.StatusCode != 200 {
 		msg, err := readResponse(resp)
-		c.cancel = nil
 		if err != nil {
 			return nil, fmt.Errorf("doRequest: failed to read the response with the status code %d: %w", resp.StatusCode, err)
 		}
